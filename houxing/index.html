@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>候星｜周期验证实验室</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a1b;
+      --panel: #141735;
+      --panel-2: #0d1028;
+      --text: #f8f6ff;
+      --muted: #aaa9c3;
+      --border: rgba(255,255,255,.12);
+      --purple: #aa91ff;
+      --purple-2: #765adf;
+      --cyan: #65e3dc;
+      --gold: #ffd27c;
+      --pink: #ff92bf;
+      --red: #ff9a9a;
+      --green: #83e8ae;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -8%, rgba(118,90,223,.28), transparent 33rem),
+        radial-gradient(circle at 92% 16%, rgba(101,227,220,.10), transparent 30rem),
+        linear-gradient(180deg, #080a1b, #0b0e25 64%, #080a1b);
+    }
+    body:before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.65) 0 1px, transparent 1.2px),
+        radial-gradient(circle, rgba(170,145,255,.52) 0 1px, transparent 1.2px);
+      background-position: 0 0, 44px 66px;
+      background-size: 122px 122px, 177px 177px;
+      mask-image: linear-gradient(to bottom, #000, transparent 75%);
+    }
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 3px;
+    }
+    .page {
+      position: relative;
+      width: min(1200px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 70px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 850; letter-spacing: .07em; }
+    .brand-star {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: var(--gold);
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 0 28px rgba(255,210,124,.18);
+    }
+    .offline {
+      padding: 7px 11px;
+      border: 1px solid rgba(101,227,220,.25);
+      border-radius: 999px;
+      color: #c3fff9;
+      background: rgba(101,227,220,.07);
+      font-size: 12px;
+    }
+    .intro { max-width: 920px; margin-bottom: 25px; }
+    .eyebrow { margin: 0 0 9px; color: var(--cyan); font-size: 12px; font-weight: 900; letter-spacing: .15em; }
+    h1 { margin: 0; font-size: clamp(34px, 5.5vw, 64px); line-height: 1.05; letter-spacing: -.045em; }
+    .intro p:last-child { max-width: 850px; margin: 16px 0 0; color: #c8c6da; font-size: 18px; line-height: 1.72; }
+    .dataset-label { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+    .dataset-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .dataset {
+      min-height: 86px;
+      padding: 13px 14px;
+      text-align: left;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .dataset:hover { transform: translateY(-2px); background: rgba(255,255,255,.06); }
+    .dataset.active { border-color: rgba(170,145,255,.62); background: rgba(118,90,223,.16); box-shadow: inset 0 0 0 1px rgba(170,145,255,.1); }
+    .dataset-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+    .dataset strong { font-size: 15px; }
+    .dataset small { display: block; color: var(--muted); line-height: 1.35; }
+    .difficulty { color: var(--gold); font-size: 11px; font-weight: 850; }
+    .dataset-status { color: var(--green); }
+    .lab {
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(22,25,58,.96), rgba(13,16,40,.97));
+      box-shadow: 0 30px 85px rgba(0,0,0,.35);
+    }
+    .lab-head {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      align-items: start;
+      gap: 22px;
+      padding: 22px 24px 16px;
+    }
+    .star-name { margin: 0 0 5px; font-size: clamp(21px, 3vw, 30px); }
+    .star-desc { margin: 0; color: var(--muted); line-height: 1.55; }
+    .source-badge {
+      padding: 8px 11px;
+      border: 1px solid rgba(101,227,220,.24);
+      border-radius: 999px;
+      color: #c0fcf6;
+      background: rgba(101,227,220,.07);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .mode-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px 18px;
+      overflow-x: auto;
+    }
+    .mode-label { color: var(--muted); font-size: 13px; white-space: nowrap; }
+    .segmented {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .mode {
+      min-height: 40px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .mode.active { color: var(--text); background: rgba(170,145,255,.2); }
+    .instruction {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 0 16px 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,210,124,.20);
+      border-radius: 16px;
+      background: rgba(255,210,124,.055);
+    }
+    .step {
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      color: #171329;
+      background: var(--gold);
+      font-weight: 900;
+    }
+    .instruction strong { display: block; margin: 0 0 3px; font-size: 16px; }
+    .instruction p { margin: 0; color: #c1bfd0; line-height: 1.5; font-size: 14px; }
+    .chart-shell {
+      margin: 0 16px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 19px;
+      background: #090c22;
+    }
+    #mainChart {
+      display: block;
+      width: 100%;
+      min-height: 390px;
+      height: auto;
+      cursor: crosshair;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 17px;
+      padding: 11px 15px 13px;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,.07);
+      font-size: 12px;
+    }
+    .key { display: inline-flex; align-items: center; gap: 7px; }
+    .key i { display: inline-block; }
+    .raw-key { width: 22px; height: 1px; background: rgba(255,255,255,.5); }
+    .smooth-key { width: 22px; height: 3px; border-radius: 3px; background: var(--purple); }
+    .guess-key { width: 14px; height: 14px; border: 1px solid rgba(255,210,124,.6); border-radius: 4px; background: rgba(255,210,124,.18); }
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
+      gap: 12px;
+      margin: 14px 16px 0;
+    }
+    .control-card, .answer-card {
+      padding: 17px 18px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+    }
+    .control-card h3, .answer-card h3 { margin: 0 0 6px; font-size: 17px; }
+    .control-card > p, .answer-card > p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+    .click-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 13px; }
+    .wave-controls { display: none; margin-top: 14px; }
+    .wave-controls.show { display: grid; gap: 13px; }
+    .slider-row {
+      display: grid;
+      grid-template-columns: 120px minmax(120px,1fr) 95px;
+      align-items: center;
+      gap: 12px;
+    }
+    .slider-row label { color: #dad7e7; font-size: 13px; }
+    .slider-row output { color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+    input[type="range"] { width: 100%; accent-color: var(--gold); }
+    .btn {
+      min-height: 43px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 12px;
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); background: rgba(255,255,255,.13); }
+    .btn:disabled { opacity: .38; cursor: not-allowed; }
+    .btn.active { color: #171329; background: var(--cyan); font-weight: 850; }
+    .btn-outline { color: #d9d2ff; border: 1px solid rgba(170,145,255,.38); background: rgba(118,90,223,.08); }
+    .answer-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-color: rgba(170,145,255,.24);
+      background: linear-gradient(135deg, rgba(118,90,223,.14), rgba(255,255,255,.03));
+    }
+    .answer-label { color: #c9bcff; font-size: 12px; font-weight: 900; letter-spacing: .08em; }
+    .answer-value { margin: 5px 0 7px; font-size: clamp(27px, 4vw, 43px); line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+    .answer-help { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .fold {
+      display: none;
+      margin: 14px 16px 0;
+      padding: 17px 18px 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      background: rgba(7,9,27,.58);
+    }
+    .fold.show { display: block; animation: rise .35s ease both; }
+    .fold-head { display: flex; justify-content: space-between; align-items: start; gap: 18px; }
+    .fold h3 { margin: 0 0 5px; font-size: 17px; }
+    .fold p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 13px; }
+    .fold-score { color: var(--cyan); white-space: nowrap; font-size: 13px; }
+    #foldChart { display: block; width: 100%; min-height: 220px; height: auto; }
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 22px;
+    }
+    .actions-left { display: flex; flex-wrap: wrap; gap: 9px; }
+    .primary {
+      min-height: 51px;
+      padding: 0 21px;
+      color: #171329;
+      background: linear-gradient(135deg, #ffe6ae, var(--gold));
+      font-weight: 900;
+      box-shadow: 0 12px 30px rgba(255,210,124,.17);
+    }
+    .primary:hover:not(:disabled) { background: linear-gradient(135deg, #fff0ca, #ffd27c); box-shadow: 0 15px 36px rgba(255,210,124,.24); }
+    .result {
+      display: none;
+      margin: 0 16px 22px;
+      padding: clamp(21px, 4vw, 32px);
+      border: 1px solid rgba(101,227,220,.30);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(101,227,220,.13), rgba(118,90,223,.13));
+    }
+    .result.show { display: block; animation: rise .4s ease both; }
+    .result.miss { border-color: rgba(255,154,154,.3); background: rgba(255,154,154,.065); }
+    .result.partial { border-color: rgba(255,210,124,.32); background: rgba(255,210,124,.065); }
+    .result-kicker { margin: 0 0 7px; color: var(--cyan); font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+    .result.miss .result-kicker { color: var(--red); }
+    .result.partial .result-kicker { color: var(--gold); }
+    .result h2 { margin: 0; font-size: clamp(25px,4vw,40px); letter-spacing: -.03em; }
+    .result-copy { max-width: 900px; margin: 12px 0 18px; color: #d0cede; line-height: 1.7; }
+    .checks { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; }
+    .check { padding: 13px; border-radius: 13px; background: rgba(4,6,20,.32); color: #cbc9d8; line-height: 1.45; font-size: 13px; }
+    .check strong { display: block; margin-bottom: 4px; color: var(--text); }
+    .explain {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 10px;
+      margin-top: 42px;
+    }
+    .explain article { padding: 17px; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,.03); }
+    .explain span { color: var(--purple); font-size: 12px; font-weight: 900; }
+    .explain h3 { margin: 15px 0 7px; font-size: 16px; }
+    .explain p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .footnote { margin-top: 18px; color: #85849e; font-size: 12px; line-height: 1.6; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 10;
+      max-width: calc(100% - 28px);
+      padding: 11px 15px;
+      transform: translate(-50%, 20px);
+      opacity: 0;
+      pointer-events: none;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.17);
+      border-radius: 12px;
+      background: rgba(15,18,44,.96);
+      box-shadow: 0 16px 45px rgba(0,0,0,.38);
+      transition: .22s ease;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%,0); }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @media (max-width: 860px) {
+      .dataset-tabs { grid-template-columns: repeat(2,1fr); }
+      .control-grid { grid-template-columns: 1fr; }
+      .checks { grid-template-columns: 1fr; }
+      .explain { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 560px) {
+      .page { width: min(100% - 18px,1200px); padding-top: 16px; }
+      .offline { display: none; }
+      .dataset-tabs { grid-template-columns: 1fr 1fr; }
+      .dataset { min-height: 96px; padding: 11px; }
+      .lab { border-radius: 20px; }
+      .lab-head { grid-template-columns: 1fr; padding: 18px 16px 13px; }
+      .source-badge { justify-self: start; }
+      .mode-row { padding: 0 16px 15px; }
+      .instruction, .chart-shell, .control-grid, .fold, .result { margin-left: 8px; margin-right: 8px; }
+      #mainChart { min-height: 420px; }
+      .slider-row { grid-template-columns: 1fr; gap: 5px; }
+      .slider-row output { text-align: left; }
+      .fold-head { flex-direction: column; }
+      .actions { flex-direction: column-reverse; align-items: stretch; padding: 16px 12px 19px; }
+      .primary { width: 100%; }
+      .actions-left .btn { flex: 1; }
+      .explain { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,*:before,*:after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand"><span class="brand-star">✦</span><span>候星 HOUXING</span></div>
+      <span class="offline">单文件 · 可离线试玩</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">周期验证实验室</p>
+      <h1>先选出规律，再让未来作证。</h1>
+      <p>选择 2～3 次相似的变暗，或者调一条周期波形去贴合凹坑。系统会把你选出的规律向后重复；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
+    </section>
+
+    <p class="dataset-label">先选一颗星：从清晰真题到容易误判的陷阱题</p>
+    <div class="dataset-tabs" id="datasetTabs"></div>
+
+    <section class="lab">
+      <header class="lab-head">
+        <div><h2 class="star-name" id="starName"></h2><p class="star-desc" id="starDesc"></p></div>
+        <span class="source-badge" id="sourceBadge"></span>
+      </header>
+
+      <div class="mode-row">
+        <span class="mode-label">我想这样选周期：</span>
+        <div class="segmented" role="group" aria-label="选择周期的方式">
+          <button class="mode active" data-mode="two" type="button">点 2 个凹坑</button>
+          <button class="mode" data-mode="three" type="button">点 3 个凹坑</button>
+          <button class="mode" data-mode="wave" type="button">调周期波形</button>
+        </div>
+      </div>
+
+      <div class="instruction">
+        <span class="step" id="stepNumber">1</span>
+        <div><strong id="instructionTitle">点第一个你觉得像“遮挡”的凹坑</strong><p id="instructionCopy">点击后，系统会吸附到附近最低的位置。</p></div>
+      </div>
+
+      <div class="chart-shell">
+        <svg id="mainChart" viewBox="0 0 1000 500" role="img" aria-label="恒星亮度随时间变化的曲线，右侧数据暂时封存。"></svg>
+        <div class="legend">
+          <span class="key"><i class="raw-key"></i>原始观测</span>
+          <span class="key"><i class="smooth-key"></i>去掉小抖动后的趋势</span>
+          <span class="key"><i class="guess-key"></i>你的周期预测</span>
+        </div>
+      </div>
+
+      <div class="control-grid">
+        <section class="control-card">
+          <h3 id="controlTitle">在图上选择凹坑</h3>
+          <p id="controlHelp">两个点之间隔了多久，就是你猜的一圈有多久。</p>
+          <div class="click-controls" id="clickControls">
+            <button class="btn" id="hintButton" type="button">给一点提示</button>
+            <button class="btn" id="undoButton" type="button" disabled>撤回一点</button>
+          </div>
+          <div class="wave-controls" id="waveControls">
+            <div class="slider-row">
+              <label for="periodSlider">一圈有多长</label>
+              <input id="periodSlider" type="range" min="0.45" max="2.4" step="0.005" value="1.2">
+              <output id="periodOutput"></output>
+            </div>
+            <div class="slider-row">
+              <label for="phaseSlider">整把尺子左右移</label>
+              <input id="phaseSlider" type="range" min="0" max="1" step="0.002" value=".25">
+              <output id="phaseOutput">拖到波谷压住凹坑</output>
+            </div>
+            <p>金色波浪只是“量周期的尺子”，不是恒星真实的亮度形状。让它的每个波谷尽量压住紫色凹坑。</p>
+          </div>
+        </section>
+
+        <aside class="answer-card">
+          <span class="answer-label">你目前选择的可能周期</span>
+          <strong class="answer-value" id="answerValue">还没选完</strong>
+          <span class="answer-help" id="answerHelp">选出足够的凹坑后，系统会把周期画成重复竖带。</span>
+        </aside>
+      </div>
+
+      <section class="fold" id="foldPanel">
+        <div class="fold-head">
+          <div><h3>把每一圈剪下来摞齐</h3><p>中线是你预测“行星经过”的时刻。若每一行的凹坑都靠近中线，这个周期更可信。</p></div>
+          <span class="fold-score" id="foldScore"></span>
+        </div>
+        <svg id="foldChart" viewBox="0 0 1000 310" role="img" aria-label="按用户选择的周期把多段曲线分行对齐。"></svg>
+      </section>
+
+      <div class="actions">
+        <div class="actions-left">
+          <button class="btn btn-outline" id="noPatternButton" type="button">我认为没有稳定周期</button>
+          <button class="btn" id="resetButton" type="button">重选本题</button>
+        </div>
+        <button class="btn primary" id="revealButton" type="button" disabled>先完成你的选择</button>
+      </div>
+
+      <section class="result" id="result">
+        <p class="result-kicker" id="resultKicker"></p>
+        <h2 id="resultTitle"></h2>
+        <p class="result-copy" id="resultCopy"></p>
+        <div class="checks">
+          <div class="check"><strong>你提交的判断</strong><span id="submittedCheck"></span></div>
+          <div class="check"><strong>封存段发生了什么</strong><span id="hiddenCheck"></span></div>
+          <div class="check"><strong>科学上意味着什么</strong><span id="scienceCheck"></span></div>
+        </div>
+      </section>
+    </section>
+
+    <section class="explain" aria-label="完整流程">
+      <article><span>01 · 后台</span><h3>清理星光</h3><p>下载数据、去掉坏点和慢漂移，保留可能的短暂变暗。</p></article>
+      <article><span>02 · 玩家</span><h3>提出一个周期</h3><p>点 2～3 个凹坑，或用波形尺调出“一圈有多久”。</p></article>
+      <article><span>03 · 系统</span><h3>封存后验证</h3><p>把周期向未来重复，再打开玩家没看过的数据对答案。</p></article>
+      <article><span>04 · 复核</span><h3>候选继续晋级</h3><p>命中只说明值得查；还要排除双星、恒星活动和仪器问题。</p></article>
+    </section>
+    <p class="footnote">题目 1 使用真实 TESS Sector 2 的 WASP‑18 b 光变数据（TIC 100100827）；题目 2～4 为固定随机种子的教学模拟数据，用来测试微弱信号、复杂噪声和假规律。这个演示只验证玩法，不用于宣布真实发现。</p>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (function () {
+    "use strict";
+    var REAL_SOURCE = {"object":"WASP-18 b","tic":"100100827","sector":2,"stepDays":0.006944444444444444,"cutoffDays":4.55,"trueTransitDays":5.052083333333333,"tutorialCentersDays":[0.3506944444444444,1.2881944444444444,2.21875,3.1840277777777777,4.107638888888888],"ppm":[-125,-291,-285,507,95,84,1,168,67,-122,590,146,39,-89,533,29,459,878,24,-254,-107,324,259,-105,246,-4,-116,88,304,227,-248,-12,-726,-564,21,-290,-259,-231,-437,-165,176,-568,-540,-1495,-8458,-9887,-9960,-10335,-10705,-10813,-10955,-10709,-10360,-9832,-9001,-4225,-329,-8,-460,-446,60,87,-163,56,21,181,-158,103,372,329,237,421,58,-201,229,120,406,315,1093,-100,-36,22,192,229,239,364,346,581,190,-65,523,480,651,180,630,172,21,384,181,448,405,12,-249,-7,-249,226,229,692,99,241,557,-490,-234,-236,-596,132,-304,-123,-489,-406,-89,-221,-393,-586,-358,536,119,544,433,361,515,448,-205,726,330,222,11,-37,545,288,34,290,776,276,10,16,209,114,-211,546,174,-396,-149,326,-547,179,-28,158,-172,-16,197,-107,452,25,191,265,377,-201,-79,195,-8,-159,-551,-4,172,-210,-216,-38,-446,-4844,-9301,-10512,-10885,-10844,-10911,-10969,-10802,-10241,-10508,-10460,-9357,-2212,-225,45,77,-387,-163,224,-195,-38,-235,-615,-233,69,-83,222,-4,-228,-151,-400,-103,-230,-151,621,260,535,359,548,202,238,97,-406,521,191,194,246,330,283,280,-131,-520,98,32,24,88,356,-39,345,-443,-613,-153,-440,-307,-73,-100,-58,160,-842,-438,-218,-1016,112,-395,-508,-353,-230,148,-359,-155,-242,-135,-163,-162,-172,229,246,299,237,109,-159,632,-37,96,53,306,-357,230,666,109,161,274,298,-85,305,452,324,-31,3,-259,583,-335,438,219,466,795,-77,28,623,-405,257,516,-31,101,188,-353,599,151,7,-141,-53,-785,-984,-674,-386,-901,-6776,-10064,-10255,-10445,-11318,-11105,-11255,-10890,-10308,-10669,-9486,-5791,-469,-658,-408,-68,-871,-391,-277,-958,-1082,-187,-76,-422,523,-345,124,-101,718,82,260,-459,74,496,-189,75,-11,-206,774,-121,294,-153,524,372,194,199,188,567,null,null,-379,582,-135,295,816,-302,81,278,-177,-1,238,521,-765,-43,-207,-244,28,113,-410,34,80,-360,-895,-391,-333,-422,92,-337,-629,-124,488,257,63,296,-90,-181,158,-47,-194,187,-48,16,219,-255,-102,493,-102,225,-99,62,95,230,53,374,58,475,648,-402,-118,21,245,1,-527,107,93,55,-624,88,-47,-370,298,14,11,-478,19,-186,-547,-334,-32,181,189,-260,-366,-197,-232,-3606,-9131,-9592,-10107,-10928,-10856,-11149,-11113,-11185,-10623,-10072,-8811,-3613,-479,-572,-548,-571,-503,-202,-343,-170,-350,137,-947,-800,-147,-185,198,166,630,502,-70,326,472,38,-264,589,-51,531,753,603,592,514,362,-249,223,503,-80,733,-159,310,235,602,587,128,-59,620,105,-142,183,3,518,103,195,-102,133,97,-57,117,-199,116,-354,-175,-421,-1181,140,-816,-99,-680,-598,10,504,436,-99,60,356,202,657,615,-92,663,-27,152,23,302,863,296,5,437,468,376,239,434,336,113,600,455,178,318,218,656,227,668,366,96,-74,118,-97,291,31,145,81,-309,-318,-130,-185,63,43,-208,-367,-57,132,-465,-343,-332,-538,-6487,-8809,-10458,-11017,-10244,-11522,-10713,-10713,-9644,-10045,-9257,-6501,-905,-371,102,257,-200,-358,16,169,-140,-76,-350,123,-226,404,-81,96,219,462,-373,214,395,329,488,565,733,228,486,300,454,-27,215,837,620,450,280,336,856,529,33,365,427,362,299,276,284,318,69,226,-67,361,498,286,520,192,47,-286,-387,-352,306,-446,-143,-802,338,76,-54,-270,-308,276,230,39,-417,167,515,7,-327,307,-62,-330,148,166,-67,76,587,92,-206,-96,153,80,373,-90,-6,567,71,750,190,543,23,180,-322,669,11,461,44,-95,446,208,-163,-561,-3,-491,382,-82,-312,-64,277,76,-320,-131,429,-13,-132,-138,-734,-1193,-8110,null,null,-10554,-10761,-11094,-10898,-10929,-10013,-10341,-9420,-3131,-74,-205,368,-637,-317,-42,-20,-255,288,221,130,-447,51,-554,151,225,0,57,291,291,-26,-77,668,512,416,596,438,176,-288,455,846,621,759,147,727,733,237,319,480,72,315,490,557,91,513,219,668,772,350,324,368,250,867,209,662,-141,25,556,267,0,206,135,-358,-461,246,-73,-542,-46,908,-207]};
+    var NS = "http://www.w3.org/2000/svg";
+    var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function rng(seed) {
+      var value = seed >>> 0;
+      return function () {
+        value += 0x6D2B79F5;
+        var t = value;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+    function gaussian(random) {
+      var u = 0, v = 0;
+      while (!u) u = random();
+      while (!v) v = random();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+    function makeSynthetic(options) {
+      var random = rng(options.seed);
+      var step = options.step || .0125;
+      var count = Math.floor(options.total / step);
+      var events = [];
+      if (options.period) {
+        for (var t = options.phase; t < options.total; t += options.period) events.push(t);
+      } else if (options.fakeEvents) {
+        events = options.fakeEvents.slice();
+      }
+      var red = 0;
+      var points = [];
+      for (var i = 0; i < count; i++) {
+        var x = (i + .5) * step;
+        red = red * .91 + gaussian(random) * (options.redNoise || .014);
+        var y = 100
+          + (options.stellarAmp || 0) * Math.sin(2 * Math.PI * x / (options.stellarPeriod || 3.1) + .6)
+          + (options.stellarAmp2 || 0) * Math.sin(2 * Math.PI * x / 1.83 + 1.4)
+          + red
+          + gaussian(random) * (options.noise || .055);
+        for (var e = 0; e < events.length; e++) {
+          var distance = Math.abs(x - events[e]);
+          var duration = options.duration || .09;
+          if (distance < duration) {
+            var shape = Math.exp(-Math.pow(distance / (duration * .48), 4));
+            var eventDepth = options.depth || .35;
+            if (!options.period) eventDepth *= .72 + random() * .48;
+            y -= eventDepth * shape;
+          }
+        }
+        var missing = false;
+        (options.gaps || []).forEach(function (gap) {
+          if (x >= gap[0] && x <= gap[1]) missing = true;
+        });
+        points.push({ x: x, y: missing ? null : y });
+      }
+      return { points: points, events: options.period ? events : [], displayEvents: events };
+    }
+    function makeReal() {
+      var points = REAL_SOURCE.ppm.map(function (ppm, index) {
+        return { x: (index + .5) * REAL_SOURCE.stepDays, y: ppm == null ? null : 100 + ppm / 10000 };
+      });
+      var events = [];
+      var period = .941449;
+      for (var t = .35069; t < points[points.length - 1].x; t += period) events.push(t);
+      return { points: points, events: events, displayEvents: events };
+    }
+
+    var real = makeReal();
+    var weak = makeSynthetic({
+      seed: 71, total: 9.15, step: .0125, period: 1.37, phase: .48,
+      depth: .29, duration: .085, noise: .07, redNoise: .011, stellarAmp: .055, stellarPeriod: 3.4
+    });
+    var complex = makeSynthetic({
+      seed: 144, total: 9.9, step: .0125, period: .86, phase: .39,
+      depth: .19, duration: .07, noise: .074, redNoise: .018, stellarAmp: .105, stellarAmp2: .035,
+      stellarPeriod: 2.72, gaps: [[2.48,2.66],[5.21,5.38]]
+    });
+    var trap = makeSynthetic({
+      seed: 903, total: 9.4, step: .0125, period: null,
+      fakeEvents: [.72,2.08,3.43,4.81,7.02,8.61],
+      depth: .28, duration: .09, noise: .061, redNoise: .017, stellarAmp: .085, stellarAmp2: .035,
+      stellarPeriod: 2.65, gaps: [[5.48,5.63]]
+    });
+
+    var datasets = [
+      {
+        id: "real", short: "鲸鱼座 A", name: "鲸鱼座 A · 清晰的真实信号",
+        desc: "先用这题学会玩法：凹坑明显、周期较短，适合观察整套验证动画。",
+        difficulty: "入门", source: "真实 TESS 数据", kind: "real",
+        data: real, cutoff: REAL_SOURCE.cutoffDays, period: .941449, phase: .35069,
+        smoothRadius: 3, yPad: .08
+      },
+      {
+        id: "weak", short: "天琴座 B", name: "天琴座 B · 微弱信号",
+        desc: "凹坑只有噪声波动的几倍高，需要把整条曲线横着比较。",
+        difficulty: "进阶", source: "教学模拟数据", kind: "sim",
+        data: weak, cutoff: 6.22, period: 1.37, phase: .48,
+        smoothRadius: 4, yPad: .045
+      },
+      {
+        id: "complex", short: "天鹅座 C", name: "天鹅座 C · 恒星自己也在变化",
+        desc: "曲线有慢慢起伏和缺口，考验你能否从大波动里看见短而重复的小凹坑。",
+        difficulty: "困难", source: "教学模拟数据", kind: "sim",
+        data: complex, cutoff: 6.82, period: .86, phase: .39,
+        smoothRadius: 3, yPad: .04
+      },
+      {
+        id: "trap", short: "猎户座 D", name: "猎户座 D · 看似有规律的陷阱",
+        desc: "前半段似乎能凑出一个周期，但后半段未必配合。也可以提交“没有稳定周期”。",
+        difficulty: "陷阱", source: "教学模拟数据", kind: "sim",
+        data: trap, cutoff: 6.34, period: null, phase: null,
+        smoothRadius: 4, yPad: .045
+      }
+    ];
+
+    var state = {
+      datasetIndex: 0,
+      mode: "two",
+      marks: [],
+      candidatePeriod: null,
+      candidatePhase: null,
+      noPattern: false,
+      hint: false,
+      revealed: false,
+      completed: {},
+      toastTimer: null
+    };
+
+    var mainChart = document.getElementById("mainChart");
+    var foldChart = document.getElementById("foldChart");
+    var datasetTabs = document.getElementById("datasetTabs");
+    var periodSlider = document.getElementById("periodSlider");
+    var phaseSlider = document.getElementById("phaseSlider");
+    var revealButton = document.getElementById("revealButton");
+    var noPatternButton = document.getElementById("noPatternButton");
+    var undoButton = document.getElementById("undoButton");
+    var hintButton = document.getElementById("hintButton");
+    var result = document.getElementById("result");
+    var plot = { left: 62, right: 970, top: 124, bottom: 414 };
+
+    function svgEl(name, attrs, text) {
+      var node = document.createElementNS(NS, name);
+      Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, attrs[key]); });
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    function current() { return datasets[state.datasetIndex]; }
+    function validPoints() { return current().data.points.filter(function (p) { return p.y != null; }); }
+    function maxTime() { var p = current().data.points; return p[p.length - 1].x; }
+    function movingMedian(points, radius) {
+      return points.map(function (point, index) {
+        if (point.y == null) return { x: point.x, y: null };
+        var values = [];
+        for (var j = -radius; j <= radius; j++) {
+          var value = points[index + j] && points[index + j].y;
+          if (Number.isFinite(value)) values.push(value);
+        }
+        values.sort(function (a,b) { return a-b; });
+        return { x: point.x, y: values[Math.floor(values.length / 2)] };
+      });
+    }
+    function ranges() {
+      var values = validPoints().map(function (p) { return p.y; });
+      var low = Math.min.apply(null, values), high = Math.max.apply(null, values);
+      var pad = current().yPad || .04;
+      return { low: low - pad, high: high + pad };
+    }
+    function xScale(t) { return plot.left + t / maxTime() * (plot.right - plot.left); }
+    function xInvert(px) { return (px - plot.left) / (plot.right - plot.left) * maxTime(); }
+    function yScale(y, range) { return plot.bottom - (y - range.low) / (range.high - range.low) * (plot.bottom - plot.top); }
+    function pathFor(points, range, xFn, yFn) {
+      var out = "", drawing = false;
+      points.forEach(function (p) {
+        if (p.y == null) { drawing = false; return; }
+        var x = xFn ? xFn(p) : xScale(p.x);
+        var y = yFn ? yFn(p) : yScale(p.y, range);
+        out += (drawing ? "L" : "M") + x.toFixed(2) + "," + y.toFixed(2);
+        drawing = true;
+      });
+      return out;
+    }
+    function formatPeriod(days) {
+      var minutes = Math.round(days * 24 * 60);
+      var hours = Math.floor(minutes / 60), rest = minutes % 60;
+      return hours + " 小时" + (rest ? " " + rest + " 分" : "");
+    }
+    function showToast(message) {
+      var toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(state.toastTimer);
+      state.toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2300);
+    }
+    function candidateReady() {
+      return state.noPattern || (Number.isFinite(state.candidatePeriod) && state.candidatePeriod > .1);
+    }
+    function recurrences() {
+      if (!Number.isFinite(state.candidatePeriod) || !Number.isFinite(state.candidatePhase)) return [];
+      var out = [], p = state.candidatePeriod, phase = state.candidatePhase;
+      var first = phase;
+      while (first - p >= 0) first -= p;
+      while (first < 0) first += p;
+      for (var t = first; t <= maxTime() + .001; t += p) out.push(t);
+      return out;
+    }
+    function nearestMinimum(day) {
+      var smooth = current().smooth;
+      var width = Math.max(.09, maxTime() / 90);
+      var candidates = smooth.filter(function (p) { return p.y != null && p.x <= current().cutoff && Math.abs(p.x - day) <= width; });
+      if (!candidates.length) return null;
+      return candidates.reduce(function (best,p) { return !best || p.y < best.y ? p : best; }, null);
+    }
+    function updateTabs() {
+      datasetTabs.innerHTML = "";
+      datasets.forEach(function (d,index) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "dataset" + (index === state.datasetIndex ? " active" : "");
+        var status = state.completed[d.id] ? "<span class=\"dataset-status\">✓ 已尝试</span>" : "<span class=\"difficulty\">" + d.difficulty + "</span>";
+        button.innerHTML = "<span class=\"dataset-top\"><strong>" + d.short + "</strong>" + status + "</span><small>" + d.source + " · " + d.difficulty + "</small>";
+        button.addEventListener("click", function () { selectDataset(index); });
+        datasetTabs.appendChild(button);
+      });
+    }
+    function updateInstructions() {
+      var title = document.getElementById("instructionTitle");
+      var copy = document.getElementById("instructionCopy");
+      var number = document.getElementById("stepNumber");
+      if (state.revealed) {
+        number.textContent = "✓";
+        title.textContent = "封存数据已经打开";
+        copy.textContent = "看金色预测带是否压住青色真实凹坑，再看下方每一圈是否继续对齐。";
+        return;
+      }
+      if (state.noPattern) {
+        number.textContent = "2";
+        title.textContent = "你选择了“没有稳定周期”";
+        copy.textContent = "现在可以封存这个判断，打开后半段看看是否存在持续重复。";
+        return;
+      }
+      if (state.mode === "wave") {
+        number.textContent = candidateReady() ? "2" : "1";
+        title.textContent = "让金色波形的每个波谷压住紫色凹坑";
+        copy.textContent = "上面的滑块控制一圈多长，下面的滑块让整把周期尺左右移动。";
+        return;
+      }
+      var needed = state.mode === "three" ? 3 : 2;
+      number.textContent = String(Math.min(state.marks.length + 1, 2));
+      if (state.marks.length < needed) {
+        title.textContent = "点第 " + (state.marks.length + 1) + " 个相似凹坑";
+        copy.textContent = state.marks.length ? "继续向右找下一次形状相似的变暗，尽量选择相邻的凹坑。" : "点击后，系统会吸附到附近最低的位置。";
+      } else {
+        title.textContent = "你选择的周期已经变成一把预测尺";
+        copy.textContent = "确认后，右侧幕布才会打开；系统会检查真实凹坑有没有落进金色预测带。";
+      }
+    }
+    function updateCandidate() {
+      var value = document.getElementById("answerValue");
+      var help = document.getElementById("answerHelp");
+      var foldPanel = document.getElementById("foldPanel");
+      if (state.noPattern) {
+        value.textContent = "没有稳定周期";
+        help.textContent = "你认为前半段的凹坑无法用同一把周期尺持续解释。";
+        foldPanel.classList.remove("show");
+      } else if (candidateReady()) {
+        value.textContent = formatPeriod(state.candidatePeriod);
+        help.textContent = "也就是你猜：可能的行星每隔这么久回来遮住一次星光。";
+        foldPanel.classList.add("show");
+        drawFold(true);
+      } else {
+        value.textContent = "还没选完";
+        var needed = state.mode === "three" ? 3 : 2;
+        help.textContent = state.mode === "wave" ? "拖动滑块，让波谷对齐凹坑。" : "还差 " + (needed - state.marks.length) + " 个凹坑。";
+        foldPanel.classList.remove("show");
+      }
+      revealButton.disabled = !candidateReady() || state.revealed;
+      revealButton.textContent = candidateReady() ? "确认并封存 · 展开后半段" : "先完成你的选择";
+      noPatternButton.classList.toggle("active", state.noPattern);
+      updateInstructions();
+    }
+    function deriveFromMarks() {
+      var needed = state.mode === "three" ? 3 : 2;
+      if (state.marks.length < needed) {
+        state.candidatePeriod = null;
+        state.candidatePhase = null;
+        return;
+      }
+      var intervals = [];
+      for (var i = 1; i < state.marks.length; i++) intervals.push(state.marks[i].x - state.marks[i-1].x);
+      intervals.sort(function (a,b) { return a-b; });
+      state.candidatePeriod = intervals[Math.floor(intervals.length / 2)];
+      state.candidatePhase = state.marks[0].x;
+    }
+    function waveCandidate() {
+      state.candidatePeriod = Number(periodSlider.value);
+      state.candidatePhase = Number(phaseSlider.value) * state.candidatePeriod;
+      state.noPattern = false;
+      periodOutput.textContent = formatPeriod(state.candidatePeriod);
+      document.getElementById("phaseOutput").textContent = "波谷起点：" + state.candidatePhase.toFixed(2) + " 天";
+      updateCandidate();
+      drawMain();
+    }
+    function setMode(mode) {
+      state.mode = mode;
+      state.marks = [];
+      state.noPattern = false;
+      state.revealed = false;
+      state.candidatePeriod = null;
+      state.candidatePhase = null;
+      result.className = "result";
+      document.querySelectorAll(".mode").forEach(function (button) { button.classList.toggle("active", button.dataset.mode === mode); });
+      var wave = mode === "wave";
+      document.getElementById("waveControls").classList.toggle("show", wave);
+      document.getElementById("clickControls").style.display = wave ? "none" : "flex";
+      document.getElementById("controlTitle").textContent = wave ? "调一条看得见的周期波形" : "在图上选择凹坑";
+      document.getElementById("controlHelp").textContent = wave ? "每个金色波谷代表一次你预测的遮挡。" : (mode === "three" ? "三个点会产生两段间隔；系统取中间值，能少受一次点偏的影响。" : "两个点之间隔了多久，就是你猜的一圈有多久。");
+      if (wave) {
+        periodSlider.value = current().difficulty === "入门" ? 1.15 : 1.22;
+        phaseSlider.value = .27;
+        waveCandidate();
+      } else {
+        updateCandidate();
+        drawMain();
+      }
+      undoButton.disabled = true;
+    }
+    function selectDataset(index) {
+      state.datasetIndex = index;
+      var d = current();
+      if (!d.smooth) d.smooth = movingMedian(d.data.points, d.smoothRadius);
+      document.getElementById("starName").textContent = d.name;
+      document.getElementById("starDesc").textContent = d.desc;
+      document.getElementById("sourceBadge").textContent = d.source + " · " + d.difficulty;
+      periodSlider.max = Math.min(2.6, maxTime() / 2.2).toFixed(2);
+      reset(false);
+      updateTabs();
+    }
+    function drawMain(options) {
+      options = options || {};
+      var d = current(), range = ranges();
+      mainChart.replaceChildren();
+      var defs = svgEl("defs");
+      var clip = svgEl("clipPath",{id:"plotClip"});
+      clip.appendChild(svgEl("rect",{x:plot.left,y:plot.top,width:plot.right-plot.left,height:plot.bottom-plot.top,rx:10}));
+      defs.appendChild(clip);
+      var glow = svgEl("filter",{id:"glow",x:"-70%",y:"-70%",width:"240%",height:"240%"});
+      glow.appendChild(svgEl("feGaussianBlur",{stdDeviation:"5",result:"b"}));
+      var merge = svgEl("feMerge");
+      merge.appendChild(svgEl("feMergeNode",{in:"b"})); merge.appendChild(svgEl("feMergeNode",{in:"SourceGraphic"}));
+      glow.appendChild(merge); defs.appendChild(glow); mainChart.appendChild(defs);
+
+      mainChart.appendChild(svgEl("rect",{x:plot.left,y:plot.top,width:plot.right-plot.left,height:plot.bottom-plot.top,rx:12,fill:"#090c22",stroke:"rgba(255,255,255,.08)"}));
+      [0,.25,.5,.75,1].forEach(function (q) {
+        var y = plot.top + q * (plot.bottom-plot.top);
+        mainChart.appendChild(svgEl("line",{x1:plot.left,x2:plot.right,y1:y,y2:y,stroke:"rgba(255,255,255,.065)","stroke-dasharray":"4 6"}));
+      });
+      var last = maxTime();
+      for (var day=0; day<=Math.floor(last); day++) {
+        var tx=xScale(day);
+        mainChart.appendChild(svgEl("line",{x1:tx,x2:tx,y1:plot.bottom,y2:plot.bottom+6,stroke:"rgba(255,255,255,.25)"}));
+        mainChart.appendChild(svgEl("text",{x:tx,y:plot.bottom+25,fill:"#9291aa","font-size":12,"text-anchor":"middle"},day===0?"开始":day+" 天"));
+      }
+      mainChart.appendChild(svgEl("text",{x:plot.left,y:plot.top-12,fill:"#aaa9c3","font-size":12},"星光越往下，表示那一刻越暗"));
+      mainChart.appendChild(svgEl("text",{x:plot.right,y:plot.bottom+48,fill:"#77768d","font-size":12,"text-anchor":"end"},"时间往后 →"));
+
+      if (state.mode === "wave" && candidateReady() && !state.noPattern) {
+        mainChart.appendChild(svgEl("rect",{x:plot.left,y:34,width:plot.right-plot.left,height:54,rx:12,fill:"rgba(255,210,124,.045)",stroke:"rgba(255,210,124,.14)"}));
+        var wavePath="";
+        for (var px=plot.left; px<=plot.right; px+=4) {
+          var time=xInvert(px);
+          var angle=2*Math.PI*(time-state.candidatePhase)/state.candidatePeriod;
+          var wy=58-18*Math.cos(angle);
+          wavePath+=(px===plot.left?"M":"L")+px+","+wy.toFixed(2);
+        }
+        mainChart.appendChild(svgEl("path",{d:wavePath,fill:"none",stroke:"#ffd27c","stroke-width":3,"stroke-linecap":"round"}));
+        mainChart.appendChild(svgEl("text",{x:plot.left+10,y:27,fill:"#ffd27c","font-size":12,"font-weight":800},"周期波形尺：让每个波谷对准一次变暗"));
+      }
+
+      var group=svgEl("g",{"clip-path":"url(#plotClip)"});
+      if (candidateReady() && !state.noPattern) {
+        recurrences().forEach(function (time) {
+          var x=xScale(time);
+          group.appendChild(svgEl("rect",{x:x-8,y:plot.top,width:16,height:plot.bottom-plot.top,fill:"rgba(255,210,124,.14)",stroke:"rgba(255,210,124,.48)","stroke-width":1}));
+        });
+      }
+      var visibleRaw=d.data.points.filter(function(p){return p.x<=d.cutoff;});
+      var hiddenRaw=d.data.points.filter(function(p){return p.x>=d.cutoff;});
+      var visibleSmooth=d.smooth.filter(function(p){return p.x<=d.cutoff;});
+      var hiddenSmooth=d.smooth.filter(function(p){return p.x>=d.cutoff;});
+      group.appendChild(svgEl("path",{d:pathFor(visibleRaw,range),fill:"none",stroke:"rgba(255,255,255,.25)","stroke-width":1}));
+      group.appendChild(svgEl("path",{d:pathFor(visibleSmooth,range),fill:"none",stroke:"#aa91ff","stroke-width":3.2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+      var hiddenRawPath=svgEl("path",{d:pathFor(hiddenRaw,range),fill:"none",stroke:"rgba(255,255,255,.27)","stroke-width":1,opacity:state.revealed?1:0});
+      var hiddenSmoothPath=svgEl("path",{d:pathFor(hiddenSmooth,range),fill:"none",stroke:"#65e3dc","stroke-width":3.3,"stroke-linejoin":"round","stroke-linecap":"round",opacity:state.revealed?1:0,pathLength:1});
+      group.appendChild(hiddenRawPath); group.appendChild(hiddenSmoothPath);
+      mainChart.appendChild(group);
+
+      state.marks.forEach(function (mark,index) {
+        var x=xScale(mark.x), y=yScale(mark.y,range);
+        mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#ffd27c","stroke-width":1.5,"stroke-dasharray":"5 5"}));
+        mainChart.appendChild(svgEl("circle",{cx:x,cy:y,r:8,fill:"#090c22",stroke:"#ffd27c","stroke-width":4,filter:"url(#glow)"}));
+        mainChart.appendChild(svgEl("circle",{cx:x,cy:plot.top+18,r:14,fill:"#ffd27c"}));
+        mainChart.appendChild(svgEl("text",{x:x,y:plot.top+23,fill:"#171329","font-size":13,"font-weight":900,"text-anchor":"middle"},String(index+1)));
+      });
+      if (state.marks.length>=2 && state.mode!=="wave") {
+        for (var m=1;m<state.marks.length;m++) {
+          var x1=xScale(state.marks[m-1].x),x2=xScale(state.marks[m].x),by=100-m*25;
+          mainChart.appendChild(svgEl("line",{x1:x1,x2:x2,y1:by,y2:by,stroke:"#ffd27c","stroke-width":2}));
+          mainChart.appendChild(svgEl("line",{x1:x1,x2:x1,y1:by-6,y2:by+6,stroke:"#ffd27c","stroke-width":2}));
+          mainChart.appendChild(svgEl("line",{x1:x2,x2:x2,y1:by-6,y2:by+6,stroke:"#ffd27c","stroke-width":2}));
+          mainChart.appendChild(svgEl("text",{x:(x1+x2)/2,y:by-7,fill:"#ffe2a0","font-size":12,"font-weight":800,"text-anchor":"middle"},formatPeriod(state.marks[m].x-state.marks[m-1].x)));
+        }
+      }
+      if (state.hint && !state.revealed) {
+        var hintEvents=d.data.displayEvents.filter(function(t){return t<d.cutoff;}).slice(0,6);
+        hintEvents.forEach(function (time) {
+          var p=nearestMinimum(time); if(!p)return;
+          var c=svgEl("circle",{cx:xScale(p.x),cy:yScale(p.y,range),r:17,fill:"none",stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"4 4"});
+          mainChart.appendChild(c);
+          if(!reducedMotion)c.animate([{opacity:.25,r:13},{opacity:1,r:20},{opacity:.25,r:13}],{duration:1700,iterations:Infinity});
+        });
+      }
+      var curtainX=xScale(d.cutoff), curtain=svgEl("g",{id:"curtain"});
+      curtain.appendChild(svgEl("rect",{x:curtainX,y:30,width:plot.right-curtainX,height:plot.bottom-30,rx:8,fill:"#181b3d",opacity:.98}));
+      curtain.appendChild(svgEl("text",{x:(curtainX+plot.right)/2,y:230,fill:"#f8f6ff","font-size":18,"font-weight":850,"text-anchor":"middle"},"后半段封存中"));
+      curtain.appendChild(svgEl("text",{x:(curtainX+plot.right)/2,y:257,fill:"#9c9bb4","font-size":12,"text-anchor":"middle"},candidateReady()?"这里已经藏着你的预测":"先提出周期，再来打开"));
+      if(candidateReady()&&!state.noPattern&&!state.revealed){
+        var future=recurrences().filter(function(t){return t>d.cutoff;})[0];
+        if(future){
+          curtain.appendChild(svgEl("circle",{cx:xScale(future),cy:296,r:22,fill:"rgba(255,210,124,.10)",stroke:"#ffd27c","stroke-width":2,"stroke-dasharray":"5 5"}));
+          curtain.appendChild(svgEl("text",{x:xScale(future),y:304,fill:"#ffd27c","font-size":22,"font-weight":900,"text-anchor":"middle"},"?"));
+        }
+      }
+      mainChart.appendChild(curtain);
+
+      if(state.revealed){
+        curtain.remove();
+        var hiddenTruth=d.data.events.filter(function(t){return t>d.cutoff;});
+        hiddenTruth.forEach(function(time){
+          var x=xScale(time);
+          mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"3 5"}));
+        });
+        if(options.animate&&!reducedMotion){
+          hiddenSmoothPath.style.strokeDasharray="1";
+          hiddenSmoothPath.style.strokeDashoffset="1";
+          hiddenSmoothPath.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:1000,easing:"ease-out",fill:"forwards"});
+        }
+      }
+      var overlay=svgEl("rect",{x:plot.left,y:plot.top,width:xScale(d.cutoff)-plot.left,height:plot.bottom-plot.top,fill:"transparent",role:"button","aria-label":"点击选择曲线中的凹坑",tabindex:0});
+      if(!state.revealed && state.mode!=="wave") overlay.addEventListener("pointerdown",handleChartClick);
+      mainChart.appendChild(overlay);
+    }
+    function handleChartClick(event) {
+      if(state.revealed||state.noPattern)return;
+      var needed=state.mode==="three"?3:2;
+      if(state.marks.length>=needed)return;
+      var box=mainChart.getBoundingClientRect();
+      var px=(event.clientX-box.left)/box.width*1000;
+      var point=nearestMinimum(xInvert(px));
+      if(!point)return;
+      if(state.marks.some(function(m){return Math.abs(m.x-point.x)<.28;})){
+        showToast("这个点离刚才太近了，请找下一次完整的凹坑。"); return;
+      }
+      state.marks.push(point);
+      state.marks.sort(function(a,b){return a.x-b.x;});
+      deriveFromMarks();
+      undoButton.disabled=false;
+      updateCandidate();
+      drawMain();
+      if(state.marks.length<needed)showToast("记下了。再找右边下一个相似凹坑。");
+    }
+    function drawFold(animate) {
+      if(!candidateReady()||state.noPattern)return;
+      var d=current(), range=ranges(), centers=recurrences().filter(function(t){
+        return t>=state.candidatePeriod*.42&&t<=maxTime()-state.candidatePeriod*.42;
+      });
+      if(centers.length>5)centers=centers.slice(-5);
+      foldChart.replaceChildren();
+      var left=150,right=965,top=46,rowHeight=48,mid=(left+right)/2;
+      foldChart.appendChild(svgEl("line",{x1:mid,x2:mid,y1:23,y2:295,stroke:"#ffd27c","stroke-width":2,"stroke-dasharray":"6 6"}));
+      foldChart.appendChild(svgEl("text",{x:mid,y:16,fill:"#ffd27c","font-size":12,"font-weight":800,"text-anchor":"middle"},"你的预测中心"));
+      centers.forEach(function(center,index){
+        var yMid=top+index*rowHeight+18,hidden=center>d.cutoff;
+        foldChart.appendChild(svgEl("text",{x:15,y:yMid+4,fill:hidden?"#65e3dc":"#aaa9c3","font-size":12},hidden?"封存的一圈":"可见第 "+(index+1)+" 圈"));
+        foldChart.appendChild(svgEl("line",{x1:left,x2:right,y1:yMid,y2:yMid,stroke:"rgba(255,255,255,.08)"}));
+        if(hidden&&!state.revealed){
+          foldChart.appendChild(svgEl("rect",{x:left,y:yMid-15,width:right-left,height:30,rx:9,fill:"#1b1e42"}));
+          foldChart.appendChild(svgEl("text",{x:mid,y:yMid+4,fill:"#9998b1","font-size":12,"text-anchor":"middle"},"🔒 开封后才显示这一圈"));
+          return;
+        }
+        var start=center-state.candidatePeriod*.45,end=center+state.candidatePeriod*.45;
+        var segment=d.smooth.filter(function(p){return p.x>=start&&p.x<=end&&p.y!=null;});
+        var baseline=(range.high+range.low)/2;
+        var scale=35/(range.high-range.low);
+        var path=svgEl("path",{
+          d:pathFor(segment,range,function(p){return left+(p.x-start)/(end-start)*(right-left);},function(p){return yMid-(baseline-p.y)*scale;}),
+          fill:"none",stroke:hidden?"#65e3dc":"#aa91ff","stroke-width":hidden?3.2:2.5,"stroke-linejoin":"round","stroke-linecap":"round"
+        });
+        foldChart.appendChild(path);
+        if(animate&&!reducedMotion)path.animate([{transform:"translateX("+(index%2?55:-55)+"px)",opacity:.08},{transform:"translateX(0)",opacity:1}],{duration:620,delay:index*70,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
+      });
+      document.getElementById("foldScore").textContent=state.revealed?"封存圈已加入比较":"先用可见数据试排";
+    }
+    function scoreAnswer() {
+      var d=current();
+      if(state.noPattern){
+        return d.period==null?{grade:"hit",title:"判断正确：这题没有稳定周期。",copy:"前半段那些看似相似的凹坑，没有在封存段按同一节奏继续出现。拒绝一个诱人的假规律，也是有效发现。",hidden:"后半段没有延续同一个固定节奏。"}:{grade:"miss",title:"这次过早放弃了：封存段仍在重复。",copy:"后半段出现了与前半段同节奏的变暗。可以回去用 2～3 个凹坑或波形尺再试。",hidden:"封存段存在按固定周期出现的真实凹坑。"};
+      }
+      if(d.period==null){
+        return {grade:"miss",title:"周期尺落空了：这是一道假规律题。",copy:"你在前半段凑出的周期，没有被封存段延续。它很像真实研究中的误报：前面看着顺眼，未来却不再准时出现。",hidden:"后半段的凹坑没有落进同一组预测带。"};
+      }
+      var predicted=recurrences().filter(function(t){return t>d.cutoff;});
+      var actual=d.data.events.filter(function(t){return t>d.cutoff;});
+      var tolerance=Math.max(.055,Math.min(.16,d.period*.11));
+      var used={};
+      var matches=0,totalError=0;
+      predicted.forEach(function(p){
+        var best=-1,bestDiff=Infinity;
+        actual.forEach(function(a,i){var diff=Math.abs(a-p);if(!used[i]&&diff<bestDiff){best=i;bestDiff=diff;}});
+        if(best>=0&&bestDiff<=tolerance){used[best]=true;matches++;totalError+=bestDiff;}
+      });
+      var coverage=actual.length?matches/actual.length:0;
+      var precision=predicted.length?matches/predicted.length:0;
+      var periodError=Math.abs(state.candidatePeriod-d.period)/d.period;
+      var minutes=matches?Math.round(totalError/matches*24*60):null;
+      if(matches&&coverage>=.66&&precision>=.66&&periodError<.12){
+        return {grade:"hit",title:"命中：封存段继续按你的周期变暗。",copy:"你先用前半段提出规律，再让没有看过的数据检验它。预测带与真实凹坑继续重合，平均时间偏差约 "+minutes+" 分钟。",hidden:matches+"/"+actual.length+" 次真实变暗落进预测带，平均偏差约 "+minutes+" 分钟。"};
+      }
+      if(matches){
+        return {grade:"partial",title:"碰中了一部分，但周期还不够完整。",copy:"至少有一次预测压住了真实凹坑，但同时漏掉了别的变暗，或多预测了不存在的变暗。这常见于选中了半周期、双周期或不相邻的凹坑。",hidden:"命中 "+matches+" 次，但封存段共有 "+actual.length+" 次真实变暗。"};
+      }
+      return {grade:"miss",title:"没有对上：封存段没有按这把尺子变暗。",copy:"这次选择的周期无法预测后面的数据。换一组更相似、更相邻的凹坑，或用波形尺重新调整。",hidden:"0/"+actual.length+" 次真实变暗落进预测带。"};
+    }
+    function reveal() {
+      if(!candidateReady()||state.revealed)return;
+      state.revealed=true;
+      revealButton.disabled=true; noPatternButton.disabled=true; undoButton.disabled=true; hintButton.disabled=true;
+      drawMain({animate:true});
+      drawFold(true);
+      updateInstructions();
+      var scored=scoreAnswer();
+      setTimeout(function(){
+        result.className="result show "+(scored.grade==="miss"?"miss":scored.grade==="partial"?"partial":"");
+        document.getElementById("resultKicker").textContent=scored.grade==="hit"?"封存验证 · 通过":scored.grade==="partial"?"封存验证 · 部分命中":"封存验证 · 未通过";
+        document.getElementById("resultTitle").textContent=scored.title;
+        document.getElementById("resultCopy").textContent=scored.copy;
+        document.getElementById("submittedCheck").textContent=state.noPattern?"没有稳定周期":formatPeriod(state.candidatePeriod)+"；由 "+(state.mode==="wave"?"周期波形":state.marks.length+" 个凹坑")+" 得出。";
+        document.getElementById("hiddenCheck").textContent=scored.hidden;
+        document.getElementById("scienceCheck").textContent=scored.grade==="hit"&&current().period?"这是“周期信号候选”，仍需排除双星、恒星活动和仪器误差。":scored.grade==="hit"?"拒绝假规律同样有价值，可减少后续复核浪费。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。";
+        state.completed[current().id]=scored.grade;
+        updateTabs();
+        result.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"nearest"});
+      },reducedMotion?30:1050);
+    }
+    function reset(scroll) {
+      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.noPattern=false; state.hint=false; state.revealed=false;
+      hintButton.disabled=false; hintButton.textContent="给一点提示"; undoButton.disabled=true; noPatternButton.disabled=false;
+      result.className="result";
+      if(state.mode==="wave"){
+        periodSlider.value=current().difficulty==="入门"?1.15:1.22;
+        phaseSlider.value=.27;
+        waveCandidate();
+      }else{
+        updateCandidate(); drawMain();
+      }
+      if(scroll)document.querySelector(".lab-head").scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"start"});
+    }
+
+    document.querySelectorAll(".mode").forEach(function(button){button.addEventListener("click",function(){setMode(button.dataset.mode);});});
+    periodSlider.addEventListener("input",waveCandidate);
+    phaseSlider.addEventListener("input",waveCandidate);
+    revealButton.addEventListener("click",reveal);
+    document.getElementById("resetButton").addEventListener("click",function(){reset(true);});
+    undoButton.addEventListener("click",function(){
+      if(state.revealed||!state.marks.length)return;
+      state.marks.pop(); deriveFromMarks(); updateCandidate(); drawMain();
+      undoButton.disabled=!state.marks.length;
+    });
+    hintButton.addEventListener("click",function(){
+      if(state.revealed)return;
+      state.hint=!state.hint; hintButton.textContent=state.hint?"收起提示":"给一点提示"; drawMain();
+      showToast(state.hint?(current().period?"虚线圈只标出值得比较的位置，不会替你选周期。":"提示：这题也许不该强行找周期。"):"提示已收起。");
+    });
+    noPatternButton.addEventListener("click",function(){
+      if(state.revealed)return;
+      state.noPattern=!state.noPattern;
+      if(state.noPattern){state.marks=[];state.candidatePeriod=null;state.candidatePhase=null;}
+      else if(state.mode==="wave")waveCandidate();
+      updateCandidate(); drawMain();
+    });
+
+    datasets.forEach(function(d){d.smooth=movingMedian(d.data.points,d.smoothRadius);});
+    selectDataset(0);
+  })();
+  </script>
+</body>
+</html>
