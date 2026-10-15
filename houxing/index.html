@@ -191,6 +191,22 @@
     }
     .instruction strong { display: block; margin: 0 0 3px; font-size: 16px; }
     .instruction p { margin: 0; color: #c1bfd0; line-height: 1.5; font-size: 14px; }
+    .baseline-summary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin: 0 16px 12px;
+      padding: 9px 13px;
+      color: #c9c7d8;
+      border: 1px solid rgba(101,227,220,.14);
+      border-radius: 13px;
+      background: rgba(101,227,220,.035);
+      font-size: 12px;
+    }
+    .baseline-summary span { color: #d9fff9; font-weight: 850; }
+    .baseline-summary i { color: var(--gold); font-style: normal; }
     .chart-shell {
       margin: 0 16px;
       overflow: hidden;
@@ -430,7 +446,7 @@
       .lab-head { grid-template-columns: 1fr; padding: 18px 16px 13px; }
       .source-badge { justify-self: start; }
       .mode-row { padding: 0 16px 15px; }
-      .instruction, .chart-shell, .control-grid, .fold, .result { margin-left: 8px; margin-right: 8px; }
+      .instruction, .baseline-summary, .chart-shell, .control-grid, .fold, .result { margin-left: 8px; margin-right: 8px; }
       #mainChart { min-height: 420px; }
       .slider-row { grid-template-columns: 1fr; gap: 5px; }
       .slider-row output { text-align: left; }
@@ -458,7 +474,7 @@
     <section class="intro">
       <p class="eyebrow">周期验证实验室</p>
       <h1>先选出规律，再让未来作证。</h1>
-      <p>十道题全部来自真实 TESS 观测：前八题练手，最后两题是尚未确认的预筛候选。选择 2～3 次相似的变暗，或者先让系统自动寻找可疑周期；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
+      <p>十道题全部来自真实 TESS 观测。先在早期星光里提出规律，机器再联合数年后的一次复访精修周期；中间没有观测的日子保持空白，但轨道时钟继续走。最后打开更晚的一整个观测季，看它是否依然准时。</p>
     </section>
 
     <p class="dataset-label">先选一颗星：8 道已知信号练习 + 2 道真实候选盲测</p>
@@ -484,11 +500,17 @@
         <div><strong id="instructionTitle">点第一个你觉得像“遮挡”的凹坑</strong><p id="instructionCopy">点击后，系统会吸附到附近最低的位置。</p></div>
       </div>
 
+      <div class="baseline-summary" aria-label="长时间序列范围">
+        <span id="fitBaseline"></span>
+        <i>中间只补时间，不补亮度</i>
+        <span id="revealBaseline"></span>
+      </div>
+
       <div class="chart-shell">
         <svg id="mainChart" viewBox="0 0 1000 500" role="img" aria-label="恒星亮度随时间变化的曲线，右侧数据暂时封存。"></svg>
         <div class="legend">
-          <span class="key"><i class="raw-key"></i>TESS 质量筛选后的观测</span>
-          <span class="key"><i class="smooth-key"></i>轻度平滑，方便看形状</span>
+          <span class="key"><i class="raw-key"></i>三个真实 TESS 观测季</span>
+          <span class="key"><i class="smooth-key"></i>紫色已见 · 青色开奖</span>
           <span class="key"><i class="guess-key"></i>你的周期预测</span>
         </div>
       </div>
@@ -517,8 +539,8 @@
           <div class="auto-tool">
             <div class="auto-head">
               <div>
-                <div class="auto-title"><strong>机器先验：先让系统扫一遍</strong><span class="auto-pill">只看封存线左侧</span></div>
-                <p class="auto-copy">系统会尝试很多把“周期尺”，先给出 3 个可疑周期。它可能命中，也可能被噪声和半周期骗到；最后由你决定用不用。</p>
+                <div class="auto-title"><strong>机器先验：让两次观测一起拟合</strong><span class="auto-pill">不看开奖季</span></div>
+                <p class="auto-copy">系统让周期穿过数百天空白，同时对齐两个可见观测季，再把半周期、原周期、双周期归进同一家族。</p>
               </div>
               <button class="btn auto-button" id="autoScanButton" type="button">自动找周期</button>
             </div>
@@ -539,7 +561,7 @@
 
       <section class="fold" id="foldPanel">
         <div class="fold-head">
-          <div><h3>把每一圈剪下来摞齐</h3><p>中线是你预测“行星经过”的时刻。若每一行的凹坑都靠近中线，这个周期更可信。</p></div>
+          <div><h3>把不同年份的一圈剪下来摞齐</h3><p>中线是你预测“行星经过”的时刻。若早期、复访和开奖季的凹坑都靠近中线，这个周期才经得住时间。</p></div>
           <span class="fold-score" id="foldScore"></span>
         </div>
         <svg id="foldChart" viewBox="0 0 1000 310" role="img" aria-label="按用户选择的周期把多段曲线分行对齐。"></svg>
@@ -559,24 +581,34 @@
         <p class="result-copy" id="resultCopy"></p>
         <div class="checks">
           <div class="check"><strong>你提交的判断</strong><span id="submittedCheck"></span></div>
-          <div class="check"><strong>封存段发生了什么</strong><span id="hiddenCheck"></span></div>
+          <div class="check"><strong>多年后发生了什么</strong><span id="hiddenCheck"></span></div>
           <div class="check"><strong>科学上意味着什么</strong><span id="scienceCheck"></span></div>
         </div>
       </section>
     </section>
 
     <section class="explain" aria-label="完整流程">
-      <article><span>01 · 后台</span><h3>清理真实星光</h3><p>读取 NASA/MAST 的 TESS FITS，去掉质量坏点和慢漂移，保留短暂变暗。</p></article>
-      <article><span>02 · 玩家</span><h3>提出一个周期</h3><p>点 2～3 个凹坑，或用波形尺调出“一圈有多久”。</p></article>
-      <article><span>03 · 系统</span><h3>封存后验证</h3><p>把周期向未来重复，再打开玩家没看过的数据对答案。</p></article>
-      <article><span>04 · 复核</span><h3>候选继续晋级</h3><p>命中只说明值得查；还要排除双星、恒星活动和仪器问题。</p></article>
+      <article><span>01 · 玩家</span><h3>认出周期家族</h3><p>在最早的一段星光里点 2～3 个相似凹坑，不必手工量到小数点后很多位。</p></article>
+      <article><span>02 · 机器</span><h3>跨年精修</h3><p>联合第二个真实观测季，解决积累数百圈以后一点点误差就会跑偏的问题。</p></article>
+      <article><span>03 · 时间</span><h3>穿过观测空白</h3><p>空白日期没有伪造亮度值；系统只让候选周期在时间轴上继续计圈。</p></article>
+      <article><span>04 · 开奖</span><h3>多年后再相遇</h3><p>第三个观测季完全封存。命中说明值得晋级，仍不等于已经确认行星。</p></article>
     </section>
-    <p class="footnote">全部 10 题均为 NASA/MAST 公开的 TESS Data Alerts 光变 FITS。页面仅做 QUALITY=0 筛选、0.7 天局部中值去趋势、20 分钟分箱和极端离群点剔除；没有人工制造或注入任何凌日。末两题在建题时仍标为 PC（行星候选），不是已确认行星：目录周期和星历没有写进网页数据，判分直接比较封存光变与玩家预测。每题右上角可打开对应的 MAST 原始 FITS，机器先验也只读取封存线左侧。</p>
+    <p class="footnote">全部曲线均来自 NASA/MAST 公开的真实 TESS FITS：每题使用 3 个 Sector，共 30 份光变文件。页面仅做 QUALITY=0 筛选、逐观测段 0.7 天局部中值去趋势、20 分钟分箱和极端离群点剔除；没有人工制造、注入或用直线填补缺测亮度。机器只读取前两个观测季，第三季只在开奖时参加判分。末两题仍是 PC（行星候选）而非已确认行星，网页盲测数据不含目录周期和星历。</p>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="./real-datasets.js"></script>
+  <script src="./datasets/wasp18.js"></script>
+  <script src="./datasets/lhs3844.js"></script>
+  <script src="./datasets/wasp4.js"></script>
+  <script src="./datasets/wasp100.js"></script>
+  <script src="./datasets/wasp126.js"></script>
+  <script src="./datasets/pimen.js"></script>
+  <script src="./datasets/toi270.js"></script>
+  <script src="./datasets/dstuc.js"></script>
+  <script src="./datasets/blind_a.js"></script>
+  <script src="./datasets/blind_b.js"></script>
   <script>
   (function () {
     "use strict";
@@ -584,8 +616,17 @@
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     var datasets = (window.HOUXING_REAL_DATASETS || []).map(function (dataset) {
-      dataset.data.points = dataset.data.points.map(function (point) { return { x: point[0], y: point[1] }; });
+      dataset.segments = dataset.segments || [];
+      dataset.data.points = [];
+      dataset.segments.forEach(function (segment, segmentIndex) {
+        segment.index = segmentIndex;
+        segment.points = segment.points.map(function (point) {
+          return { x: point[0], y: point[1], segmentIndex: segmentIndex, role: segment.role };
+        });
+        dataset.data.points = dataset.data.points.concat(segment.points);
+      });
       dataset.smooth = null;
+      dataset.layout = null;
       return dataset;
     });
 
@@ -595,6 +636,7 @@
       marks: [],
       candidatePeriod: null,
       candidatePhase: null,
+      rawPeriod: null,
       noPattern: false,
       hint: false,
       revealed: false,
@@ -631,17 +673,41 @@
     }
     function current() { return datasets[state.datasetIndex]; }
     function validPoints() { return current().data.points.filter(function (p) { return p.y != null; }); }
-    function maxTime() { var p = current().data.points; return p[p.length - 1].x; }
+    function maxTime() { return current().segments[current().segments.length-1].end; }
+    function segmentForTime(time) {
+      return current().segments.find(function(segment){return time>=segment.start-.001&&time<=segment.end+.001;}) || null;
+    }
+    function visiblePoints() {
+      return current().data.points.filter(function(p){return p.y!=null&&p.role!=="reveal";});
+    }
+    function hiddenPoints() {
+      return current().data.points.filter(function(p){return p.y!=null&&p.role==="reveal";});
+    }
+    function buildLayout() {
+      var d=current();
+      if(d.layout)return d.layout;
+      var gapWidth=64,totalWidth=plot.right-plot.left-gapWidth*Math.max(0,d.segments.length-1);
+      var totalDuration=d.segments.reduce(function(sum,segment){return sum+segment.duration;},0);
+      var cursor=plot.left;
+      d.layout=d.segments.map(function(segment,index){
+        var width=totalWidth*segment.duration/totalDuration;
+        var item={segment:segment,x0:cursor,x1:cursor+width};
+        cursor+=width+(index<d.segments.length-1?gapWidth:0);
+        return item;
+      });
+      return d.layout;
+    }
     function movingMedian(points, radius) {
       return points.map(function (point, index) {
         if (point.y == null) return { x: point.x, y: null };
         var values = [];
         for (var j = -radius; j <= radius; j++) {
-          var value = points[index + j] && points[index + j].y;
-          if (Number.isFinite(value)) values.push(value);
+          var neighbour=points[index+j];
+          var value = neighbour && neighbour.y;
+          if (Number.isFinite(value)&&Math.abs(neighbour.x-point.x)<.12) values.push(value);
         }
         values.sort(function (a,b) { return a-b; });
-        return { x: point.x, y: values[Math.floor(values.length / 2)] };
+        return { x: point.x, y: values[Math.floor(values.length / 2)], segmentIndex:point.segmentIndex, role:point.role };
       });
     }
     function ranges() {
@@ -651,17 +717,29 @@
       var pad = current().yPad || .04;
       return { low: low - pad, high: high + pad };
     }
-    function xScale(t) { return plot.left + t / maxTime() * (plot.right - plot.left); }
-    function xInvert(px) { return (px - plot.left) / (plot.right - plot.left) * maxTime(); }
+    function xScale(t) {
+      var item=buildLayout().find(function(layout){return t>=layout.segment.start-.001&&t<=layout.segment.end+.001;});
+      if(!item)return null;
+      return item.x0+(t-item.segment.start)/(item.segment.end-item.segment.start)*(item.x1-item.x0);
+    }
+    function xInvert(px) {
+      var item=buildLayout().find(function(layout){return px>=layout.x0&&px<=layout.x1;});
+      if(!item)return null;
+      return item.segment.start+(px-item.x0)/(item.x1-item.x0)*(item.segment.end-item.segment.start);
+    }
     function yScale(y, range) { return plot.bottom - (y - range.low) / (range.high - range.low) * (plot.bottom - plot.top); }
     function pathFor(points, range, xFn, yFn) {
       var out = "", drawing = false;
+      var previous=null;
       points.forEach(function (p) {
         if (p.y == null) { drawing = false; return; }
         var x = xFn ? xFn(p) : xScale(p.x);
         var y = yFn ? yFn(p) : yScale(p.y, range);
+        if(x==null||!Number.isFinite(x)){drawing=false;return;}
+        if(previous&&Math.abs(p.x-previous.x)>.08)drawing=false;
         out += (drawing ? "L" : "M") + x.toFixed(2) + "," + y.toFixed(2);
         drawing = true;
+        previous=p;
       });
       return out;
     }
@@ -688,17 +766,17 @@
     }
     function recurrences() {
       if (!Number.isFinite(state.candidatePeriod) || !Number.isFinite(state.candidatePhase)) return [];
-      var out = [], p = state.candidatePeriod, phase = state.candidatePhase;
-      var first = phase;
-      while (first - p >= 0) first -= p;
-      while (first < 0) first += p;
-      for (var t = first; t <= maxTime() + .001; t += p) out.push(t);
-      return out;
+      var out=[];
+      current().segments.forEach(function(segment){
+        out=out.concat(recurrenceTimes(state.candidatePeriod,state.candidatePhase,segment.start,segment.end));
+      });
+      return out.sort(function(a,b){return a-b;});
     }
     function nearestMinimum(day) {
+      if(!Number.isFinite(day))return null;
       var smooth = current().smooth;
-      var width = Math.max(.09, maxTime() / 90);
-      var candidates = smooth.filter(function (p) { return p.y != null && p.x <= current().cutoff && Math.abs(p.x - day) <= width; });
+      var width = .22;
+      var candidates = smooth.filter(function (p) { return p.y != null && p.role === "discover" && Math.abs(p.x - day) <= width; });
       if (!candidates.length) return null;
       return candidates.reduce(function (best,p) { return !best || p.y < best.y ? p : best; }, null);
     }
@@ -709,7 +787,7 @@
       return sorted.length % 2 ? sorted[middle] : (sorted[middle-1] + sorted[middle]) / 2;
     }
     function visibleResiduals() {
-      var visible = current().data.points.filter(function (p) { return p.y != null && p.x <= current().cutoff; });
+      var visible = visiblePoints();
       if (!visible.length) return [];
       var cadence = visible.length > 1 ? median(visible.slice(1).map(function (p,index) { return p.x - visible[index].x; }).filter(function (v) { return v > 0 && v < .08; })) : .0125;
       var radius = Math.max(7, Math.round(.24 / Math.max(.004,cadence)));
@@ -721,8 +799,30 @@
         return { x:point.x, y:point.y-median(values) };
       });
     }
+    function harmonicRelation(first,second) {
+      var ratio=first/second;
+      return [1/3,1/2,1,2,3].some(function(target){return Math.abs(ratio-target)/target<.008;});
+    }
+    function groupMachineCandidates(raw) {
+      var families=[];
+      raw.forEach(function(candidate){
+        var family=families.find(function(item){return harmonicRelation(candidate.period,item.period);});
+        if(family)family.variants.push(candidate);
+        else families.push(Object.assign({},candidate,{variants:[candidate]}));
+      });
+      return families.slice(0,3).map(function(family,index){
+        family.rank=index+1;
+        family.events=current().segments.filter(function(segment){return segment.role!=="reveal";}).reduce(function(total,segment){
+          return total+recurrenceTimes(family.period,family.phase,segment.start,segment.end).length;
+        },0);
+        return family;
+      });
+    }
     function autoPeriodScan() {
       var d = current();
+      if(d.machineCandidates&&d.machineCandidates.length){
+        return groupMachineCandidates(d.machineCandidates);
+      }
       var series = visibleResiduals();
       if (series.length < 40) return [];
       var residualMedian = median(series.map(function(p){return p.y;}));
@@ -731,7 +831,8 @@
         1.4826 * median(series.map(function(p){return Math.abs(p.y-residualMedian);}))
       );
       var minPeriod = d.autoMin || .45;
-      var maxPeriod = Math.min(d.autoMax || 3.05, d.cutoff / 2.02);
+      var observedDays=d.segments.filter(function(segment){return segment.role!=="reveal";}).reduce(function(total,segment){return total+segment.duration;},0);
+      var maxPeriod = Math.min(d.autoMax || 3.05, observedDays / 2.02);
       var step = Math.max(.004, (maxPeriod-minPeriod)/430);
       var bins = 52;
       var results = [];
@@ -765,14 +866,12 @@
         var phaseCenter=((best.start+best.width/2)%bins)/bins*period;
         var halfWindow=best.width/bins*period*.62;
         var eventMeans=[];
-        for(var center=phaseCenter;center<=d.cutoff+.001;center+=period){
-          var eventPoints=series.filter(function(p){return Math.abs(p.x-center)<=halfWindow;});
-          if(eventPoints.length>=3)eventMeans.push(eventPoints.reduce(function(sum,p){return sum+p.y;},0)/eventPoints.length);
-        }
-        for(var back=phaseCenter-period;back>=0;back-=period){
-          var earlier=series.filter(function(p){return Math.abs(p.x-back)<=halfWindow;});
-          if(earlier.length>=3)eventMeans.push(earlier.reduce(function(sum,p){return sum+p.y;},0)/earlier.length);
-        }
+        d.segments.filter(function(segment){return segment.role!=="reveal";}).forEach(function(segment){
+          recurrenceTimes(period,phaseCenter,segment.start,segment.end).forEach(function(center){
+            var eventPoints=series.filter(function(p){return Math.abs(p.x-center)<=halfWindow;});
+            if(eventPoints.length>=3)eventMeans.push(eventPoints.reduce(function(sum,p){return sum+p.y;},0)/eventPoints.length);
+          });
+        });
         var negative=eventMeans.filter(function(v){return v<-.16*sigma;}).length;
         var coherence=eventMeans.length?negative/eventMeans.length:0;
         var eventMedian=eventMeans.length?median(eventMeans):0;
@@ -806,12 +905,14 @@
       }
       var top=state.autoOptions[0];
       var strength=top.score>=7?"较强":top.score>=4?"中等":"较弱";
-      document.getElementById("autoSummary").textContent="已扫描封存线左侧。最可疑的是 "+formatPeriod(top.period)+"，可见段证据“"+strength+"”。下面是相对匹配排名，不是行星概率。";
+      document.getElementById("autoSummary").textContent="已联合扫描两个真实观测季，并让周期跨过中间空白继续计时。最可疑的是 "+formatPeriod(top.period)+"，长基线证据“"+strength+"”。下面是周期家族排名，不是行星概率。";
       state.autoOptions.forEach(function(candidate,index){
         var button=document.createElement("button");
         button.type="button";
         button.className="auto-candidate"+(state.candidateSource==="auto"&&Math.abs(state.candidatePeriod-candidate.period)<.0001?" selected":"");
-        button.innerHTML="<span class=\"auto-rank\">候选 "+(index+1)+" · 点击采用</span><span class=\"auto-period\">"+formatPeriod(candidate.period)+"</span><span class=\"auto-score\">相对匹配 "+candidate.relative+"% · 对齐 "+candidate.events+" 圈</span>";
+        var variants=candidate.variants.filter(function(item){return Math.abs(item.period-candidate.period)/candidate.period>.003;}).slice(0,2);
+        var familyText=variants.length?" · 同族还有 "+variants.map(function(item){return formatPeriod(item.period);}).join(" / "):"";
+        button.innerHTML="<span class=\"auto-rank\">周期家族 "+(index+1)+" · 点击采用</span><span class=\"auto-period\">"+formatPeriod(candidate.period)+"</span><span class=\"auto-score\">相对匹配 "+candidate.relative+"% · 跨段对齐 "+candidate.events+" 圈"+familyText+"</span>";
         button.addEventListener("click",function(){applyAutoCandidate(index);});
         autoCandidates.appendChild(button);
       });
@@ -841,6 +942,7 @@
       state.noPattern=false;
       state.candidatePeriod=candidate.period;
       state.candidatePhase=candidate.phase;
+      state.rawPeriod=candidate.period;
       state.candidateSource="auto";
       undoButton.disabled=true;
       updateCandidate();
@@ -875,8 +977,8 @@
       var number = document.getElementById("stepNumber");
       if (state.revealed) {
         number.textContent = "✓";
-        title.textContent = "封存数据已经打开";
-        copy.textContent = "看金色预测带是否压住青色真实凹坑，再看下方每一圈是否继续对齐。";
+        title.textContent = "多年后的封存观测已经打开";
+        copy.textContent = "看金色周期跨过长期空白后，是否仍压住青色真实凹坑。";
         return;
       }
       if (state.noPattern) {
@@ -887,8 +989,8 @@
       }
       if (state.candidateSource === "auto" && candidateReady()) {
         number.textContent = "2";
-        title.textContent = "机器先验已经变成你的候选周期";
-        copy.textContent = "金色预测带来自可见数据的自动扫描。你可以直接封存验证，也可以继续自己改。";
+        title.textContent = "机器已经用跨年观测精修周期";
+        copy.textContent = "这把周期尺同时对齐了早期发现段和后来的拟合段，封存季仍未参与。";
         return;
       }
       if (state.mode === "wave") {
@@ -918,8 +1020,10 @@
       } else if (candidateReady()) {
         value.textContent = formatPeriod(state.candidatePeriod);
         help.textContent = state.candidateSource === "auto"
-          ? "这是机器只看可见段给出的先验候选；你可以拿它去封存验证，也可以自己改。"
-          : "也就是你猜：可能的行星每隔这么久回来遮住一次星光。";
+          ? "机器联合两个可见观测季得到这个精修周期；多年后的开奖季没有参与。"
+          : state.candidateSource === "human-fit"
+            ? "你先选中了这个周期家族；机器再用跨年拟合段把它精修到足以远期预测。"
+            : "也就是你猜：可能的行星每隔这么久回来遮住一次星光。";
         foldPanel.classList.add("show");
         drawFold(true);
       } else {
@@ -929,7 +1033,7 @@
         foldPanel.classList.remove("show");
       }
       revealButton.disabled = !candidateReady() || state.revealed;
-      revealButton.textContent = candidateReady() ? "确认并封存 · 展开后半段" : "先完成你的选择";
+      revealButton.textContent = candidateReady() ? "封存这把周期尺 · 打开多年后观测" : "先完成你的选择";
       noPatternButton.classList.toggle("active", state.noPattern);
       if(state.candidateSource!=="auto")autoCandidates.querySelectorAll(".selected").forEach(function(node){node.classList.remove("selected");});
       updateInstructions();
@@ -945,13 +1049,36 @@
       var intervals = [];
       for (var i = 1; i < state.marks.length; i++) intervals.push(state.marks[i].x - state.marks[i-1].x);
       intervals.sort(function (a,b) { return a-b; });
-      state.candidatePeriod = intervals[Math.floor(intervals.length / 2)];
-      state.candidatePhase = state.marks[0].x;
-      state.candidateSource = "human";
+      var rough=intervals[Math.floor(intervals.length / 2)];
+      state.rawPeriod=rough;
+      var refined=nearestLongCandidate(rough,.08);
+      state.candidatePeriod = refined ? refined.period : rough;
+      state.candidatePhase = refined ? refined.phase : state.marks[0].x;
+      state.candidateSource = refined ? "human-fit" : "human";
+    }
+    function nearestLongCandidate(period,tolerance) {
+      var candidates=current().machineCandidates||[];
+      var best=null;
+      candidates.forEach(function(candidate){
+        var error=Math.abs(candidate.period-period)/period;
+        if(error<=tolerance&&(!best||error<best.error))best={candidate:candidate,error:error};
+      });
+      return best&&best.candidate;
+    }
+    function calibrateWaveCandidate() {
+      if(state.candidateSource!=="wave")return;
+      var rough=state.candidatePeriod;
+      var refined=nearestLongCandidate(rough,.045);
+      if(!refined)return;
+      state.rawPeriod=rough;
+      state.candidatePeriod=refined.period;
+      state.candidatePhase=refined.phase;
+      state.candidateSource="wave-fit";
     }
     function waveCandidate() {
       state.candidatePeriod = Number(periodSlider.value);
       state.candidatePhase = Number(phaseSlider.value) * state.candidatePeriod;
+      state.rawPeriod = state.candidatePeriod;
       state.noPattern = false;
       state.candidateSource = "wave";
       periodOutput.textContent = formatPeriod(state.candidatePeriod);
@@ -968,6 +1095,7 @@
       state.validation = null;
       state.candidatePeriod = null;
       state.candidatePhase = null;
+      state.rawPeriod = null;
       state.candidateSource = null;
       result.className = "result";
       document.querySelectorAll(".mode").forEach(function (button) { button.classList.toggle("active", button.dataset.mode === mode); });
@@ -992,17 +1120,19 @@
       var d = current();
       if (!d.smooth) d.smooth = movingMedian(d.data.points, d.smoothRadius);
       document.getElementById("starName").textContent = d.name;
-      document.getElementById("starDesc").textContent = d.desc;
+      document.getElementById("starDesc").textContent = d.desc+" 本局再加入 Sector "+d.segments[1].sector+" 做跨年拟合，并把 Sector "+d.segments[2].sector+" 整段封存开奖。";
       var sourceBadge = document.getElementById("sourceBadge");
-      sourceBadge.textContent = d.source + " · " + d.difficulty + " · 打开原始 FITS ↗";
+      sourceBadge.textContent = d.source + " · " + d.difficulty + " · 打开最早 FITS ↗";
       sourceBadge.href = d.url;
-      periodSlider.max = Math.min(12, maxTime() / 1.6).toFixed(2);
+      periodSlider.max = Math.min(12, d.autoMax || 12).toFixed(2);
+      document.getElementById("fitBaseline").textContent="机器拟合跨度 "+Math.round(d.fitBaselineDays)+" 天";
+      document.getElementById("revealBaseline").textContent="最终开奖跨度 "+Math.round(d.baselineDays)+" 天";
       reset(false);
       updateTabs();
     }
     function drawMain(options) {
       options = options || {};
-      var d = current(), range = ranges();
+      var d = current(), range = ranges(), layout=buildLayout();
       mainChart.replaceChildren();
       var defs = svgEl("defs");
       var clip = svgEl("clipPath",{id:"plotClip"});
@@ -1019,26 +1149,43 @@
         var y = plot.top + q * (plot.bottom-plot.top);
         mainChart.appendChild(svgEl("line",{x1:plot.left,x2:plot.right,y1:y,y2:y,stroke:"rgba(255,255,255,.065)","stroke-dasharray":"4 6"}));
       });
-      var last = maxTime();
-      for (var day=0; day<=Math.floor(last); day++) {
-        var tx=xScale(day);
-        mainChart.appendChild(svgEl("line",{x1:tx,x2:tx,y1:plot.bottom,y2:plot.bottom+6,stroke:"rgba(255,255,255,.25)"}));
-        mainChart.appendChild(svgEl("text",{x:tx,y:plot.bottom+25,fill:"#9291aa","font-size":12,"text-anchor":"middle"},day===0?"开始":day+" 天"));
-      }
+      layout.forEach(function(item,index){
+        var segment=item.segment;
+        mainChart.appendChild(svgEl("rect",{x:item.x0,y:plot.top,width:item.x1-item.x0,height:plot.bottom-plot.top,fill:segment.role==="reveal"?"rgba(101,227,220,.018)":"rgba(170,145,255,.018)"}));
+        var heading=segment.role==="discover"?"发现":segment.role==="fit"?"机器拟合":"封存开奖";
+        mainChart.appendChild(svgEl("text",{x:(item.x0+item.x1)/2,y:plot.top-18,fill:segment.role==="reveal"?"#65e3dc":"#c8bdff","font-size":12,"font-weight":850,"text-anchor":"middle"},heading+" · S"+segment.sector+" · "+segment.year));
+        [0,.5,1].forEach(function(q){
+          var tx=item.x0+q*(item.x1-item.x0),localDay=Math.round(q*segment.duration);
+          mainChart.appendChild(svgEl("line",{x1:tx,x2:tx,y1:plot.bottom,y2:plot.bottom+6,stroke:"rgba(255,255,255,.25)"}));
+          mainChart.appendChild(svgEl("text",{x:tx,y:plot.bottom+25,fill:"#9291aa","font-size":11,"text-anchor":"middle"},"+"+localDay+"天"));
+        });
+        if(index<layout.length-1){
+          var next=layout[index+1],mid=(item.x1+next.x0)/2,gap=Math.max(0,next.segment.start-segment.end);
+          mainChart.appendChild(svgEl("rect",{x:item.x1,y:plot.top,width:next.x0-item.x1,height:plot.bottom-plot.top,fill:"#07091c"}));
+          mainChart.appendChild(svgEl("line",{x1:item.x1+5,x2:next.x0-5,y1:plot.top+42,y2:plot.top+42,stroke:"rgba(255,210,124,.38)","stroke-dasharray":"4 5"}));
+          mainChart.appendChild(svgEl("text",{x:mid,y:plot.top+87,fill:"#9c9bb4","font-size":10,"text-anchor":"middle"},"无观测"));
+          mainChart.appendChild(svgEl("text",{x:mid,y:plot.top+103,fill:"#c8c6da","font-size":11,"font-weight":800,"text-anchor":"middle"},Math.round(gap)+"天"));
+          if(candidateReady()&&!state.noPattern){
+            mainChart.appendChild(svgEl("text",{x:mid,y:plot.top+26,fill:"#ffd27c","font-size":9,"font-weight":800,"text-anchor":"middle"},"周期照常走约"+Math.max(1,Math.round(gap/state.candidatePeriod))+"圈"));
+          }
+        }
+      });
       mainChart.appendChild(svgEl("text",{x:plot.left,y:plot.top-12,fill:"#aaa9c3","font-size":12},"星光越往下，表示那一刻越暗"));
-      mainChart.appendChild(svgEl("text",{x:plot.right,y:plot.bottom+48,fill:"#77768d","font-size":12,"text-anchor":"end"},"时间往后 →"));
+      mainChart.appendChild(svgEl("text",{x:plot.right,y:plot.bottom+48,fill:"#77768d","font-size":12,"text-anchor":"end"},"真实时间向后；空白处没有补造数据 →"));
 
       if (state.mode === "wave" && candidateReady() && !state.noPattern) {
         mainChart.appendChild(svgEl("rect",{x:plot.left,y:34,width:plot.right-plot.left,height:54,rx:12,fill:"rgba(255,210,124,.045)",stroke:"rgba(255,210,124,.14)"}));
-        var wavePath="";
-        for (var px=plot.left; px<=plot.right; px+=4) {
-          var time=xInvert(px);
-          var angle=2*Math.PI*(time-state.candidatePhase)/state.candidatePeriod;
-          var wy=58-18*Math.cos(angle);
-          wavePath+=(px===plot.left?"M":"L")+px+","+wy.toFixed(2);
-        }
-        mainChart.appendChild(svgEl("path",{d:wavePath,fill:"none",stroke:"#ffd27c","stroke-width":3,"stroke-linecap":"round"}));
-        mainChart.appendChild(svgEl("text",{x:plot.left+10,y:27,fill:"#ffd27c","font-size":12,"font-weight":800},"周期波形尺：让每个波谷对准一次变暗"));
+        layout.forEach(function(item){
+          var wavePath="";
+          for (var px=item.x0; px<=item.x1; px+=3) {
+            var time=xInvert(px);
+            var angle=2*Math.PI*(time-state.candidatePhase)/state.candidatePeriod;
+            var wy=58-18*Math.cos(angle);
+            wavePath+=(wavePath?"L":"M")+px+","+wy.toFixed(2);
+          }
+          mainChart.appendChild(svgEl("path",{d:wavePath,fill:"none",stroke:"#ffd27c","stroke-width":2.4,"stroke-linecap":"round"}));
+        });
+        mainChart.appendChild(svgEl("text",{x:plot.left+10,y:27,fill:"#ffd27c","font-size":12,"font-weight":800},"周期波形尺：观测停了，轨道时钟没有停"));
       }
 
       var group=svgEl("g",{"clip-path":"url(#plotClip)"});
@@ -1048,10 +1195,10 @@
           group.appendChild(svgEl("rect",{x:x-8,y:plot.top,width:16,height:plot.bottom-plot.top,fill:"rgba(255,210,124,.14)",stroke:"rgba(255,210,124,.48)","stroke-width":1}));
         });
       }
-      var visibleRaw=d.data.points.filter(function(p){return p.x<=d.cutoff;});
-      var hiddenRaw=d.data.points.filter(function(p){return p.x>=d.cutoff;});
-      var visibleSmooth=d.smooth.filter(function(p){return p.x<=d.cutoff;});
-      var hiddenSmooth=d.smooth.filter(function(p){return p.x>=d.cutoff;});
+      var visibleRaw=d.data.points.filter(function(p){return p.role!=="reveal";});
+      var hiddenRaw=d.data.points.filter(function(p){return p.role==="reveal";});
+      var visibleSmooth=d.smooth.filter(function(p){return p.role!=="reveal";});
+      var hiddenSmooth=d.smooth.filter(function(p){return p.role==="reveal";});
       group.appendChild(svgEl("path",{d:pathFor(visibleRaw,range),fill:"none",stroke:"rgba(255,255,255,.25)","stroke-width":1}));
       group.appendChild(svgEl("path",{d:pathFor(visibleSmooth,range),fill:"none",stroke:"#aa91ff","stroke-width":3.2,"stroke-linejoin":"round","stroke-linecap":"round"}));
       var hiddenRawPath=svgEl("path",{d:pathFor(hiddenRaw,range),fill:"none",stroke:"rgba(255,255,255,.27)","stroke-width":1,opacity:state.revealed?1:0});
@@ -1076,7 +1223,8 @@
         }
       }
       if (state.hint && !state.revealed) {
-        var hintEvents=d.data.displayEvents.filter(function(t){return t<d.cutoff;}).slice(0,6);
+        var discovery=d.segments[0];
+        var hintEvents=d.data.displayEvents.filter(function(t){return t>=discovery.start&&t<=discovery.end;}).slice(0,6);
         hintEvents.forEach(function (time) {
           var p=nearestMinimum(time); if(!p)return;
           var c=svgEl("circle",{cx:xScale(p.x),cy:yScale(p.y,range),r:17,fill:"none",stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"4 4"});
@@ -1084,21 +1232,20 @@
           if(!reducedMotion)c.animate([{opacity:.25,r:13},{opacity:1,r:20},{opacity:.25,r:13}],{duration:1700,iterations:Infinity});
         });
       }
-      var curtainX=xScale(d.cutoff), curtain=svgEl("g",{id:"curtain"});
-      curtain.appendChild(svgEl("rect",{x:curtainX,y:30,width:plot.right-curtainX,height:plot.bottom-30,rx:8,fill:"#181b3d",opacity:.98}));
-      curtain.appendChild(svgEl("text",{x:(curtainX+plot.right)/2,y:230,fill:"#f8f6ff","font-size":18,"font-weight":850,"text-anchor":"middle"},"后半段封存中"));
-      curtain.appendChild(svgEl("text",{x:(curtainX+plot.right)/2,y:257,fill:"#9c9bb4","font-size":12,"text-anchor":"middle"},candidateReady()?"这里已经藏着你的预测":"先提出周期，再来打开"));
-      if(candidateReady()&&!state.noPattern&&!state.revealed){
-        var future=recurrences().filter(function(t){return t>d.cutoff;})[0];
-        if(future){
-          curtain.appendChild(svgEl("circle",{cx:xScale(future),cy:296,r:22,fill:"rgba(255,210,124,.10)",stroke:"#ffd27c","stroke-width":2,"stroke-dasharray":"5 5"}));
-          curtain.appendChild(svgEl("text",{x:xScale(future),y:304,fill:"#ffd27c","font-size":22,"font-weight":900,"text-anchor":"middle"},"?"));
+      var curtain=svgEl("g",{id:"curtain"});
+      layout.filter(function(item){return item.segment.role==="reveal";}).forEach(function(item){
+        curtain.appendChild(svgEl("rect",{x:item.x0,y:plot.top,width:item.x1-item.x0,height:plot.bottom-plot.top,rx:8,fill:"#181b3d",opacity:.985}));
+        curtain.appendChild(svgEl("text",{x:(item.x0+item.x1)/2,y:230,fill:"#f8f6ff","font-size":17,"font-weight":850,"text-anchor":"middle"},"多年后观测 · 封存中"));
+        curtain.appendChild(svgEl("text",{x:(item.x0+item.x1)/2,y:255,fill:"#9c9bb4","font-size":11,"text-anchor":"middle"},candidateReady()?"周期已穿过空白来到这里":"先提出周期，再来打开"));
+        var future=recurrences().filter(function(t){return t>=item.segment.start&&t<=item.segment.end;})[0];
+        if(candidateReady()&&!state.noPattern&&!state.revealed&&future){
+          curtain.appendChild(svgEl("circle",{cx:xScale(future),cy:296,r:20,fill:"rgba(255,210,124,.10)",stroke:"#ffd27c","stroke-width":2,"stroke-dasharray":"5 5"}));
+          curtain.appendChild(svgEl("text",{x:xScale(future),y:303,fill:"#ffd27c","font-size":20,"font-weight":900,"text-anchor":"middle"},"?"));
         }
-      }
-      mainChart.appendChild(curtain);
+      });
+      if(!state.revealed)mainChart.appendChild(curtain);
 
       if(state.revealed){
-        curtain.remove();
         if(d.blind&&state.validation){
           state.validation.events.forEach(function(event){
             var x=xScale(event.center),color=event.supports?"#65e3dc":"#ff9a9a";
@@ -1107,7 +1254,7 @@
           });
         }else{
           var revealedSignal=state.matchedSignal || d.signals[0];
-          revealedSignal.events.filter(function(t){return t>d.cutoff;}).forEach(function(time){
+          revealedSignal.events.filter(function(t){var segment=segmentForTime(t);return segment&&segment.role==="reveal";}).forEach(function(time){
             var x=xScale(time);
             mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"3 5"}));
           });
@@ -1118,7 +1265,8 @@
           hiddenSmoothPath.animate([{strokeDashoffset:1},{strokeDashoffset:0}],{duration:1000,easing:"ease-out",fill:"forwards"});
         }
       }
-      var overlay=svgEl("rect",{x:plot.left,y:plot.top,width:xScale(d.cutoff)-plot.left,height:plot.bottom-plot.top,fill:"transparent",role:"button","aria-label":"点击选择曲线中的凹坑",tabindex:0});
+      var discoveryLayout=layout[0];
+      var overlay=svgEl("rect",{x:discoveryLayout.x0,y:plot.top,width:discoveryLayout.x1-discoveryLayout.x0,height:plot.bottom-plot.top,fill:"transparent",role:"button","aria-label":"点击发现段曲线中的凹坑",tabindex:0});
       if(!state.revealed && state.mode!=="wave") overlay.addEventListener("pointerdown",handleChartClick);
       mainChart.appendChild(overlay);
     }
@@ -1143,17 +1291,24 @@
     }
     function drawFold(animate) {
       if(!candidateReady()||state.noPattern)return;
-      var d=current(), range=ranges(), centers=recurrences().filter(function(t){
-        return t>=state.candidatePeriod*.42&&t<=maxTime()-state.candidatePeriod*.42;
+      var d=current(), range=ranges(), rows=[];
+      d.segments.forEach(function(segment){
+        var centers=recurrenceTimes(state.candidatePeriod,state.candidatePhase,segment.start+state.candidatePeriod*.42,segment.end-state.candidatePeriod*.42);
+        var wanted=segment.role==="reveal"?1:2;
+        if(centers.length>wanted){
+          centers=wanted===1?[centers[Math.floor(centers.length/2)]]:[centers[Math.floor(centers.length*.3)],centers[Math.floor(centers.length*.7)]];
+        }
+        centers.forEach(function(center){rows.push({center:center,segment:segment});});
       });
-      if(centers.length>5)centers=centers.slice(-5);
+      if(rows.length>5)rows=rows.slice(0,4).concat(rows.slice(-1));
       foldChart.replaceChildren();
       var left=150,right=965,top=46,rowHeight=48,mid=(left+right)/2;
       foldChart.appendChild(svgEl("line",{x1:mid,x2:mid,y1:23,y2:295,stroke:"#ffd27c","stroke-width":2,"stroke-dasharray":"6 6"}));
       foldChart.appendChild(svgEl("text",{x:mid,y:16,fill:"#ffd27c","font-size":12,"font-weight":800,"text-anchor":"middle"},"你的预测中心"));
-      centers.forEach(function(center,index){
-        var yMid=top+index*rowHeight+18,hidden=center>d.cutoff;
-        foldChart.appendChild(svgEl("text",{x:15,y:yMid+4,fill:hidden?"#65e3dc":"#aaa9c3","font-size":12},hidden?"封存的一圈":"可见第 "+(index+1)+" 圈"));
+      rows.forEach(function(row,index){
+        var center=row.center,segment=row.segment,hidden=segment.role==="reveal",yMid=top+index*rowHeight+18;
+        var role=segment.role==="discover"?"发现":segment.role==="fit"?"跨年拟合":"封存开奖";
+        foldChart.appendChild(svgEl("text",{x:15,y:yMid+4,fill:hidden?"#65e3dc":"#aaa9c3","font-size":11},"S"+segment.sector+" · "+role));
         foldChart.appendChild(svgEl("line",{x1:left,x2:right,y1:yMid,y2:yMid,stroke:"rgba(255,255,255,.08)"}));
         if(hidden&&!state.revealed){
           foldChart.appendChild(svgEl("rect",{x:left,y:yMid-15,width:right-left,height:30,rx:9,fill:"#1b1e42"}));
@@ -1161,17 +1316,17 @@
           return;
         }
         var start=center-state.candidatePeriod*.45,end=center+state.candidatePeriod*.45;
-        var segment=d.smooth.filter(function(p){return p.x>=start&&p.x<=end&&p.y!=null;});
+        var curve=d.smooth.filter(function(p){return p.x>=start&&p.x<=end&&p.y!=null;});
         var baseline=(range.high+range.low)/2;
         var scale=35/(range.high-range.low);
         var path=svgEl("path",{
-          d:pathFor(segment,range,function(p){return left+(p.x-start)/(end-start)*(right-left);},function(p){return yMid-(baseline-p.y)*scale;}),
+          d:pathFor(curve,range,function(p){return left+(p.x-start)/(end-start)*(right-left);},function(p){return yMid-(baseline-p.y)*scale;}),
           fill:"none",stroke:hidden?"#65e3dc":"#aa91ff","stroke-width":hidden?3.2:2.5,"stroke-linejoin":"round","stroke-linecap":"round"
         });
         foldChart.appendChild(path);
         if(animate&&!reducedMotion)path.animate([{transform:"translateX("+(index%2?55:-55)+"px)",opacity:.08},{transform:"translateX(0)",opacity:1}],{duration:620,delay:index*70,easing:"cubic-bezier(.2,.8,.2,1)",fill:"both"});
       });
-      document.getElementById("foldScore").textContent=state.revealed?"封存圈已加入比较":"先用可见数据试排";
+      document.getElementById("foldScore").textContent=state.revealed?"多年后的一圈已加入":"两个可见观测季已对齐";
     }
     function allResiduals() {
       var points=current().data.points.filter(function(p){return p.y!=null;});
@@ -1183,7 +1338,7 @@
         for(var j=Math.max(0,index-radius);j<=Math.min(points.length-1,index+radius);j++){
           if(Math.abs(points[j].x-point.x)<=.28)values.push(points[j].y);
         }
-        return {x:point.x,y:point.y-median(values)};
+        return {x:point.x,y:point.y-median(values),role:point.role,segmentIndex:point.segmentIndex};
       });
     }
     function recurrenceTimes(period,phase,minimum,maximum) {
@@ -1196,6 +1351,15 @@
         if(time>=minimum-.001)out.push(time);
       }
       return out;
+    }
+    function centersForRole(period,phase,role) {
+      var centers=[];
+      current().segments.filter(function(segment){
+        return role==="visible"?segment.role!=="reveal":segment.role===role;
+      }).forEach(function(segment){
+        centers=centers.concat(recurrenceTimes(period,phase,segment.start,segment.end));
+      });
+      return centers;
     }
     function eventEvidence(series,centers,width) {
       var events=[];
@@ -1231,8 +1395,8 @@
       };
     }
     function fitBlindWindow(series) {
-      var d=current(),period=state.candidatePeriod,phase=state.candidatePhase;
-      var centers=recurrenceTimes(period,phase,0,d.cutoff);
+      var period=state.candidatePeriod,phase=state.candidatePhase;
+      var centers=centersForRole(period,phase,"visible");
       var widths=[.03,.04,.05,.065,.085,.11,.145,.19].filter(function(width){return width<=Math.min(.22,period*.22);});
       if(!widths.length)widths=[Math.max(.02,period*.16)];
       var best=null;
@@ -1250,78 +1414,58 @@
     function scoreBlindAnswer() {
       var d=current();
       if(state.noPattern){
-        return {grade:"miss",title:"这两题来自预筛池，请提交一个具体周期。",copy:"“没有周期”无法参加这次封存预测。你可以先点“自动找周期”，再从只看前段数据得出的候选里选一个。",hidden:"没有具体预测，所以封存段无法对这把周期尺做检验。",validation:null};
+        if(!d.blind){
+          return {grade:"miss",signal:d.signals[0],title:"这次过早放弃了：跨年观测仍在重复。",copy:"这份真实 TESS 数据里至少有一个已确认的凌日周期。可以回去用 2～3 个凹坑、波形尺或机器先验再试。",hidden:"多年后的封存观测仍存在稳定重复的真实凹坑。",validation:null};
+        }
+        return {grade:"miss",title:"这道题来自预筛池，请提交一个具体周期。",copy:"“没有周期”无法参加这次远期预测。你可以先点“自动找周期”，再从只看两个可见观测季得出的候选里选一个。",hidden:"没有具体预测，所以多年后的封存观测无法检验这把周期尺。",validation:null};
       }
       var series=allResiduals();
       var fitted=fitBlindWindow(series);
-      var hiddenCenters=recurrenceTimes(state.candidatePeriod,state.candidatePhase,d.cutoff,maxTime());
+      var hiddenCenters=centersForRole(state.candidatePeriod,state.candidatePhase,"reveal");
       var hidden=eventEvidence(series,hiddenCenters,fitted.width);
       var controls=[];
       for(var index=1;index<49;index++){
         var offset=state.candidatePeriod*index/49;
         var circularDistance=Math.min(offset,state.candidatePeriod-offset);
         if(circularDistance<fitted.width*1.6)continue;
-        var shifted=recurrenceTimes(state.candidatePeriod,state.candidatePhase+offset,d.cutoff,maxTime());
+        var shifted=centersForRole(state.candidatePeriod,state.candidatePhase+offset,"reveal");
         controls.push(eventEvidence(series,shifted,fitted.width).snr);
       }
       var percentile=(1+controls.filter(function(value){return value<=hidden.snr;}).length)/(1+controls.length);
-      var halfPhase=eventEvidence(series,recurrenceTimes(state.candidatePeriod,state.candidatePhase+state.candidatePeriod/2,d.cutoff,maxTime()),fitted.width);
+      var halfPhase=eventEvidence(series,centersForRole(state.candidatePeriod,state.candidatePhase+state.candidatePeriod/2,"reveal"),fitted.width);
       var harmonic=halfPhase.events.length&&halfPhase.snr>=2.2&&halfPhase.depth>=hidden.depth*.55&&halfPhase.supportFraction>=.35;
       var jointSnr=Math.sqrt(Math.pow(Math.max(0,fitted.evidence.snr),2)+Math.pow(Math.max(0,hidden.snr),2));
       var supported=hidden.events.filter(function(event){return event.supports;}).length;
-      var percentileLabel=Math.round(percentile*100)+"%";
+      var betterCount=controls.filter(function(value){return value<hidden.snr;}).length;
+      var percentileLabel=betterCount===controls.length?"全部 "+controls.length+" 组":betterCount+"/"+controls.length+" 组";
       var validation={events:hidden.events,width:fitted.width,visible:fitted.evidence,hidden:hidden,percentile:percentile,harmonic:harmonic};
       if(harmonic&&jointSnr>=2.3&&percentile>=.86){
-        return {grade:"partial",title:"预测抓到了一部分，但周期可能长了一倍。",copy:"封存段确实在你的预测位置变暗，可是两次预测之间的半程也出现了相似下降。试着把周期除以 2，再封存一次。",hidden:"预测位置与半周期位置都显著变暗；当前答案更像真周期的两倍。",validation:validation};
+        return {grade:"partial",title:"多年后仍抓到一部分，但周期可能长了一倍。",copy:"封存观测确实在你的预测位置变暗，可是两次预测之间的半程也出现了相似下降。试着把周期除以 2，再封存一次。",hidden:"预测位置与半周期位置都显著变暗；当前答案更像真周期的两倍。",validation:validation};
       }
       var hit=fitted.evidence.events.length>=2&&hidden.events.length>=1&&hidden.coverage>=.5&&hidden.depth>0&&hidden.snr>=1.25&&jointSnr>=2.15&&percentile>=.9;
       if(hit){
-        return {grade:"hit",title:"封存段也准时变暗：这条候选值得晋级。",copy:"网页没有拿目录周期对答案。它只把你的周期延伸到未见数据，再做同位置与随机错位比较；封存段的合并下降约 "+formatDepth(hidden.depth)+"。",hidden:"封存段 "+supported+"/"+hidden.events.length+" 个可检验窗口单独达到下凹阈值；合并证据超过 "+percentileLabel+" 的随机错位。",validation:validation};
+        return {grade:"hit",title:"跨过多年空白后，它仍准时变暗。",copy:"网页没有拿目录周期对答案。机器先用两个可见观测季精修，再把轨道时钟延伸到未见数据；封存观测的合并下降约 "+formatDepth(hidden.depth)+"。",hidden:"多年后 "+supported+"/"+hidden.events.length+" 个可检验窗口单独达到下凹阈值；合并证据优于 "+percentileLabel+" 随机错位。",validation:validation};
       }
       var partial=hidden.depth>0&&hidden.snr>=.7&&jointSnr>=1.5&&percentile>=.78;
       if(partial){
-        return {grade:"partial",title:"有一点对齐，但证据还不够稳。",copy:"封存段在预测位置略有变暗，不过强度或重复性还没有越过本页的盲测门槛。微调周期和起点，或比较机器给出的另一个候选。",hidden:"合并下降约 "+formatDepth(hidden.depth)+"，超过 "+percentileLabel+" 的随机错位，但尚未同时满足全部门槛。",validation:validation};
+        return {grade:"partial",title:"多年后还有一点对齐，但证据不够稳。",copy:"封存观测在预测位置略有变暗，不过强度或重复性还没有越过本页门槛。微调周期和起点，或比较机器给出的另一个周期家族。",hidden:"合并下降约 "+formatDepth(hidden.depth)+"，优于 "+percentileLabel+" 随机错位，但尚未同时满足全部门槛。",validation:validation};
       }
-      return {grade:"miss",title:"这把周期尺没有通过封存检验。",copy:"在未见数据里，预测位置没有比随机错位更稳定地变暗。换一组相似凹坑，或试试机器先验的下一名。",hidden:"预测位置的合并证据只超过 "+percentileLabel+" 的随机错位。",validation:validation};
+      return {grade:"miss",title:"这把周期尺没有穿过时间考验。",copy:"在多年后的未见数据里，预测位置没有比随机错位更稳定地变暗。换一组相似凹坑，或试试机器先验的下一个周期家族。",hidden:"预测位置的合并证据只优于 "+percentileLabel+" 随机错位。",validation:validation};
     }
     function scoreAnswer() {
       var d=current();
-      if(d.blind)return scoreBlindAnswer();
-      if(state.noPattern){
-        return {grade:"miss",signal:d.signals[0],title:"这次过早放弃了：封存段仍在重复。",copy:"这份真实 TESS 数据里至少有一个已确认的凌日周期。可以回去用 2～3 个凹坑、波形尺或机器先验再试。",hidden:"封存段存在与已确认星历相符的真实凹坑。"};
+      var scored=scoreBlindAnswer();
+      if(!d.blind&&d.signals.length){
+        var signal=d.signals.slice().sort(function(a,b){return Math.abs(a.period-state.candidatePeriod)-Math.abs(b.period-state.candidatePeriod);})[0];
+        scored.signal=signal;
+        if(scored.grade==="hit")scored.title="跨年命中 "+signal.label+"：多年后仍准时变暗。";
       }
-      var predicted=recurrences().filter(function(t){return t>d.cutoff;});
-      var evaluations=d.signals.map(function(signal){
-        var actual=signal.events.filter(function(t){return t>d.cutoff;});
-        var tolerance=Math.max(.055,Math.min(.18,signal.period*.06));
-        var used={};
-        var matches=0,totalError=0;
-        predicted.forEach(function(p){
-          var closest=-1,closestDiff=Infinity;
-          actual.forEach(function(a,i){var diff=Math.abs(a-p);if(!used[i]&&diff<closestDiff){closest=i;closestDiff=diff;}});
-          if(closest>=0&&closestDiff<=tolerance){used[closest]=true;matches++;totalError+=closestDiff;}
-        });
-        var coverage=actual.length?matches/actual.length:0;
-        var precision=predicted.length?matches/predicted.length:0;
-        var periodError=Math.abs(state.candidatePeriod-signal.period)/signal.period;
-        var hit=matches>0&&coverage>=.66&&precision>=.66&&periodError<.12;
-        var rank=(hit?1000:0)+matches*100+coverage*25+precision*25-Math.min(periodError,2)*10;
-        return {signal:signal,actual:actual,matches:matches,totalError:totalError,coverage:coverage,precision:precision,periodError:periodError,hit:hit,rank:rank};
-      });
-      evaluations.sort(function(a,b){return b.rank-a.rank;});
-      var best=evaluations[0];
-      var label=best.signal.label;
-      var minutes=best.matches?Math.round(best.totalError/best.matches*24*60):null;
-      if(best.hit){
-        return {grade:"hit",signal:best.signal,title:"命中 "+label+"：封存段继续按你的周期变暗。",copy:"你只用前半段提出规律，预测带在封存段继续压住真实凹坑；平均时间偏差约 "+minutes+" 分钟。",hidden:best.matches+"/"+best.actual.length+" 次 "+label+" 的已知凌日落进预测带，平均偏差约 "+minutes+" 分钟。"};
-      }
-      if(best.matches){
-        return {grade:"partial",signal:best.signal,title:"碰中了 "+label+" 的一部分，但周期还不够完整。",copy:"至少有一次预测压住了已知凌日，但同时漏掉了别的变暗，或多预测了不存在的变暗。这常见于选中了半周期、双周期或不相邻的凹坑。",hidden:"命中 "+best.matches+" 次，但封存段共有 "+best.actual.length+" 次 "+label+" 的已知凌日。"};
-      }
-      return {grade:"miss",signal:best.signal,title:"没有对上：封存段没有按这把尺子变暗。",copy:"这次选择的周期无法预测后面的真实 TESS 数据。换一组更相似、更相邻的凹坑，或用波形尺重新调整。",hidden:"0/"+best.actual.length+" 次 "+label+" 的已知凌日落进预测带。"};
+      return scored;
     }
     function reveal() {
       if(!candidateReady()||state.revealed)return;
+      calibrateWaveCandidate();
+      updateCandidate();
       var scored=scoreAnswer();
       state.matchedSignal=scored.signal || null;
       state.validation=scored.validation || null;
@@ -1337,19 +1481,19 @@
         document.getElementById("resultKicker").textContent=scored.grade==="hit"?"封存验证 · 通过":scored.grade==="partial"?"封存验证 · 部分命中":"封存验证 · 未通过";
         document.getElementById("resultTitle").textContent=scored.title;
         document.getElementById("resultCopy").textContent=scored.copy;
-        var sourceLabel=state.candidateSource==="auto"?"机器先验候选":state.mode==="wave"?"周期波形":state.marks.length+" 个凹坑";
+        var sourceLabel=state.candidateSource==="auto"?"跨年机器先验":state.candidateSource==="human-fit"?state.marks.length+" 个凹坑 + 跨年精修":state.candidateSource==="wave-fit"?"周期波形 + 跨年精修":state.mode==="wave"?"周期波形":state.marks.length+" 个凹坑";
         document.getElementById("submittedCheck").textContent=state.noPattern?"没有稳定周期":formatPeriod(state.candidatePeriod)+"；由 "+sourceLabel+" 得出。";
         document.getElementById("hiddenCheck").textContent=scored.hidden;
         document.getElementById("scienceCheck").textContent=current().blind
           ? (scored.grade==="hit"?"这只证明信号能在未见数据中复现，仍不等于确认行星；还要排除食双星、恒星活动和仪器效应。":scored.grade==="partial"?"它仍可继续调整，但目前不能晋级为高概率候选。":"这次周期不晋级；盲测失败不代表这颗星一定没有别的信号。")
-          : (scored.grade==="hit"?"封存段与已确认的 "+scored.signal.label+" 星历相符；游戏只是在真实数据上复现信号发现与盲测过程。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。");
+          : (scored.grade==="hit"?"多年后的真实光变仍支持已确认的 "+scored.signal.label+"；游戏只是在真实数据上复现信号发现与盲测过程。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。");
         state.completed[current().id]=scored.grade;
         updateTabs();
         result.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"nearest"});
       },reducedMotion?30:1050);
     }
     function reset(scroll) {
-      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false; state.matchedSignal=null; state.validation=null;
+      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.rawPeriod=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false; state.matchedSignal=null; state.validation=null;
       hintButton.disabled=false; hintButton.textContent="给一点提示"; undoButton.disabled=true; noPatternButton.disabled=false;
       autoScanButton.disabled=false;
       result.className="result";
@@ -1383,7 +1527,7 @@
     noPatternButton.addEventListener("click",function(){
       if(state.revealed)return;
       state.noPattern=!state.noPattern;
-      if(state.noPattern){state.marks=[];state.candidatePeriod=null;state.candidatePhase=null;state.candidateSource="none";}
+      if(state.noPattern){state.marks=[];state.candidatePeriod=null;state.candidatePhase=null;state.rawPeriod=null;state.candidateSource="none";}
       else if(state.mode==="wave")waveCandidate();
       else state.candidateSource=null;
       updateCandidate(); drawMain();
