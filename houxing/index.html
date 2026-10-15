@@ -138,7 +138,9 @@
       background: rgba(101,227,220,.07);
       font-size: 12px;
       white-space: nowrap;
+      text-decoration: none;
     }
+    .source-badge:hover { border-color: rgba(101,227,220,.5); background: rgba(101,227,220,.12); }
     .mode-row {
       display: flex;
       align-items: center;
@@ -450,22 +452,22 @@
   <main class="page">
     <header class="topbar">
       <div class="brand"><span class="brand-star">✦</span><span>候星 HOUXING</span></div>
-      <span class="offline">单文件 · 可离线试玩</span>
+      <span class="offline">NASA/MAST 真实数据 · 在线试玩</span>
     </header>
 
     <section class="intro">
       <p class="eyebrow">周期验证实验室</p>
       <h1>先选出规律，再让未来作证。</h1>
-      <p>选择 2～3 次相似的变暗，或者调一条周期波形去贴合凹坑。系统会把你选出的规律向后重复；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
+      <p>八道题全部来自真实 TESS 观测。选择 2～3 次相似的变暗，或者先让系统自动寻找可疑周期；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
     </section>
 
-    <p class="dataset-label">先选一颗星：从清晰真题到容易误判的陷阱题</p>
+    <p class="dataset-label">先选一颗星：8 段真实 TESS 光变，从清晰热木星到活跃恒星与多行星系统</p>
     <div class="dataset-tabs" id="datasetTabs"></div>
 
     <section class="lab">
       <header class="lab-head">
         <div><h2 class="star-name" id="starName"></h2><p class="star-desc" id="starDesc"></p></div>
-        <span class="source-badge" id="sourceBadge"></span>
+        <a class="source-badge" id="sourceBadge" target="_blank" rel="noreferrer"></a>
       </header>
 
       <div class="mode-row">
@@ -485,8 +487,8 @@
       <div class="chart-shell">
         <svg id="mainChart" viewBox="0 0 1000 500" role="img" aria-label="恒星亮度随时间变化的曲线，右侧数据暂时封存。"></svg>
         <div class="legend">
-          <span class="key"><i class="raw-key"></i>原始观测</span>
-          <span class="key"><i class="smooth-key"></i>去掉小抖动后的趋势</span>
+          <span class="key"><i class="raw-key"></i>TESS 质量筛选后的观测</span>
+          <span class="key"><i class="smooth-key"></i>轻度平滑，方便看形状</span>
           <span class="key"><i class="guess-key"></i>你的周期预测</span>
         </div>
       </div>
@@ -564,196 +566,28 @@
     </section>
 
     <section class="explain" aria-label="完整流程">
-      <article><span>01 · 后台</span><h3>清理星光</h3><p>下载数据、去掉坏点和慢漂移，保留可能的短暂变暗。</p></article>
+      <article><span>01 · 后台</span><h3>清理真实星光</h3><p>读取 NASA/MAST 的 TESS FITS，去掉质量坏点和慢漂移，保留短暂变暗。</p></article>
       <article><span>02 · 玩家</span><h3>提出一个周期</h3><p>点 2～3 个凹坑，或用波形尺调出“一圈有多久”。</p></article>
       <article><span>03 · 系统</span><h3>封存后验证</h3><p>把周期向未来重复，再打开玩家没看过的数据对答案。</p></article>
       <article><span>04 · 复核</span><h3>候选继续晋级</h3><p>命中只说明值得查；还要排除双星、恒星活动和仪器问题。</p></article>
     </section>
-    <p class="footnote">题目 1 使用真实 TESS Sector 2 的 WASP‑18 b 光变数据（TIC 100100827）；题目 2～8 为固定随机种子的教学模拟数据，覆盖微弱信号、恒星活动、数据缺口、半周期误判、时刻摆动和假规律。机器先验只读取封存线左侧，不会偷看答案。这个演示只验证玩法，不用于宣布真实发现。</p>
+    <p class="footnote">全部 8 题均为 NASA/MAST 公开的 TESS Data Alerts 光变 FITS。页面仅做 QUALITY=0 筛选、0.7 天局部中值去趋势、20 分钟分箱和极端离群点剔除；没有人工制造或注入任何凌日。每题右上角可打开对应的 MAST 原始 FITS。机器先验只读取封存线左侧，不会偷看答案。</p>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="./real-datasets.js"></script>
   <script>
   (function () {
     "use strict";
-    var REAL_SOURCE = {"object":"WASP-18 b","tic":"100100827","sector":2,"stepDays":0.006944444444444444,"cutoffDays":4.55,"trueTransitDays":5.052083333333333,"tutorialCentersDays":[0.3506944444444444,1.2881944444444444,2.21875,3.1840277777777777,4.107638888888888],"ppm":[-125,-291,-285,507,95,84,1,168,67,-122,590,146,39,-89,533,29,459,878,24,-254,-107,324,259,-105,246,-4,-116,88,304,227,-248,-12,-726,-564,21,-290,-259,-231,-437,-165,176,-568,-540,-1495,-8458,-9887,-9960,-10335,-10705,-10813,-10955,-10709,-10360,-9832,-9001,-4225,-329,-8,-460,-446,60,87,-163,56,21,181,-158,103,372,329,237,421,58,-201,229,120,406,315,1093,-100,-36,22,192,229,239,364,346,581,190,-65,523,480,651,180,630,172,21,384,181,448,405,12,-249,-7,-249,226,229,692,99,241,557,-490,-234,-236,-596,132,-304,-123,-489,-406,-89,-221,-393,-586,-358,536,119,544,433,361,515,448,-205,726,330,222,11,-37,545,288,34,290,776,276,10,16,209,114,-211,546,174,-396,-149,326,-547,179,-28,158,-172,-16,197,-107,452,25,191,265,377,-201,-79,195,-8,-159,-551,-4,172,-210,-216,-38,-446,-4844,-9301,-10512,-10885,-10844,-10911,-10969,-10802,-10241,-10508,-10460,-9357,-2212,-225,45,77,-387,-163,224,-195,-38,-235,-615,-233,69,-83,222,-4,-228,-151,-400,-103,-230,-151,621,260,535,359,548,202,238,97,-406,521,191,194,246,330,283,280,-131,-520,98,32,24,88,356,-39,345,-443,-613,-153,-440,-307,-73,-100,-58,160,-842,-438,-218,-1016,112,-395,-508,-353,-230,148,-359,-155,-242,-135,-163,-162,-172,229,246,299,237,109,-159,632,-37,96,53,306,-357,230,666,109,161,274,298,-85,305,452,324,-31,3,-259,583,-335,438,219,466,795,-77,28,623,-405,257,516,-31,101,188,-353,599,151,7,-141,-53,-785,-984,-674,-386,-901,-6776,-10064,-10255,-10445,-11318,-11105,-11255,-10890,-10308,-10669,-9486,-5791,-469,-658,-408,-68,-871,-391,-277,-958,-1082,-187,-76,-422,523,-345,124,-101,718,82,260,-459,74,496,-189,75,-11,-206,774,-121,294,-153,524,372,194,199,188,567,null,null,-379,582,-135,295,816,-302,81,278,-177,-1,238,521,-765,-43,-207,-244,28,113,-410,34,80,-360,-895,-391,-333,-422,92,-337,-629,-124,488,257,63,296,-90,-181,158,-47,-194,187,-48,16,219,-255,-102,493,-102,225,-99,62,95,230,53,374,58,475,648,-402,-118,21,245,1,-527,107,93,55,-624,88,-47,-370,298,14,11,-478,19,-186,-547,-334,-32,181,189,-260,-366,-197,-232,-3606,-9131,-9592,-10107,-10928,-10856,-11149,-11113,-11185,-10623,-10072,-8811,-3613,-479,-572,-548,-571,-503,-202,-343,-170,-350,137,-947,-800,-147,-185,198,166,630,502,-70,326,472,38,-264,589,-51,531,753,603,592,514,362,-249,223,503,-80,733,-159,310,235,602,587,128,-59,620,105,-142,183,3,518,103,195,-102,133,97,-57,117,-199,116,-354,-175,-421,-1181,140,-816,-99,-680,-598,10,504,436,-99,60,356,202,657,615,-92,663,-27,152,23,302,863,296,5,437,468,376,239,434,336,113,600,455,178,318,218,656,227,668,366,96,-74,118,-97,291,31,145,81,-309,-318,-130,-185,63,43,-208,-367,-57,132,-465,-343,-332,-538,-6487,-8809,-10458,-11017,-10244,-11522,-10713,-10713,-9644,-10045,-9257,-6501,-905,-371,102,257,-200,-358,16,169,-140,-76,-350,123,-226,404,-81,96,219,462,-373,214,395,329,488,565,733,228,486,300,454,-27,215,837,620,450,280,336,856,529,33,365,427,362,299,276,284,318,69,226,-67,361,498,286,520,192,47,-286,-387,-352,306,-446,-143,-802,338,76,-54,-270,-308,276,230,39,-417,167,515,7,-327,307,-62,-330,148,166,-67,76,587,92,-206,-96,153,80,373,-90,-6,567,71,750,190,543,23,180,-322,669,11,461,44,-95,446,208,-163,-561,-3,-491,382,-82,-312,-64,277,76,-320,-131,429,-13,-132,-138,-734,-1193,-8110,null,null,-10554,-10761,-11094,-10898,-10929,-10013,-10341,-9420,-3131,-74,-205,368,-637,-317,-42,-20,-255,288,221,130,-447,51,-554,151,225,0,57,291,291,-26,-77,668,512,416,596,438,176,-288,455,846,621,759,147,727,733,237,319,480,72,315,490,557,91,513,219,668,772,350,324,368,250,867,209,662,-141,25,556,267,0,206,135,-358,-461,246,-73,-542,-46,908,-207]};
     var NS = "http://www.w3.org/2000/svg";
     var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    function rng(seed) {
-      var value = seed >>> 0;
-      return function () {
-        value += 0x6D2B79F5;
-        var t = value;
-        t = Math.imul(t ^ (t >>> 15), t | 1);
-        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-    function gaussian(random) {
-      var u = 0, v = 0;
-      while (!u) u = random();
-      while (!v) v = random();
-      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-    }
-    function makeSynthetic(options) {
-      var random = rng(options.seed);
-      var step = options.step || .0125;
-      var count = Math.floor(options.total / step);
-      var events = [];
-      if (options.period) {
-        var eventIndex = 0;
-        for (var t = options.phase; t < options.total; t += options.period) {
-          var jitter = options.timingJitter ? Math.sin(eventIndex * 1.73 + .4) * options.timingJitter : 0;
-          if (!options.skipEvents || options.skipEvents.indexOf(eventIndex) === -1) events.push(t + jitter);
-          eventIndex++;
-        }
-      } else if (options.fakeEvents) {
-        events = options.fakeEvents.slice();
-      }
-      var eventDepths = events.map(function (_, index) {
-        if (options.alternatingDepth) return index % 2 ? options.alternatingDepth : (options.depth || .35);
-        return (options.depth || .35) * (options.depthWobble ? 1 + Math.sin(index * 2.11) * options.depthWobble : 1);
-      });
-      var red = 0;
-      var points = [];
-      for (var i = 0; i < count; i++) {
-        var x = (i + .5) * step;
-        red = red * .91 + gaussian(random) * (options.redNoise || .014);
-        var y = 100
-          + (options.stellarAmp || 0) * Math.sin(2 * Math.PI * x / (options.stellarPeriod || 3.1) + .6)
-          + (options.stellarAmp2 || 0) * Math.sin(2 * Math.PI * x / 1.83 + 1.4)
-          + red
-          + gaussian(random) * (options.noise || .055);
-        for (var e = 0; e < events.length; e++) {
-          var distance = Math.abs(x - events[e]);
-          var duration = options.duration || .09;
-          if (distance < duration) {
-            var shape = Math.exp(-Math.pow(distance / (duration * .48), options.shapePower || 4));
-            var eventDepth = eventDepths[e];
-            y -= eventDepth * shape;
-          }
-        }
-        (options.outliers || []).forEach(function (outlier) {
-          if (Math.abs(x - outlier[0]) < step * 1.1) y += outlier[1];
-        });
-        var missing = false;
-        (options.gaps || []).forEach(function (gap) {
-          if (x >= gap[0] && x <= gap[1]) missing = true;
-        });
-        points.push({ x: x, y: missing ? null : y });
-      }
-      return { points: points, events: options.period ? events : [], displayEvents: events };
-    }
-    function makeReal() {
-      var points = REAL_SOURCE.ppm.map(function (ppm, index) {
-        return { x: (index + .5) * REAL_SOURCE.stepDays, y: ppm == null ? null : 100 + ppm / 10000 };
-      });
-      var events = [];
-      var period = .941449;
-      for (var t = .35069; t < points[points.length - 1].x; t += period) events.push(t);
-      return { points: points, events: events, displayEvents: events };
-    }
-
-    var real = makeReal();
-    var weak = makeSynthetic({
-      seed: 71, total: 9.15, step: .0125, period: 1.37, phase: .48,
-      depth: .29, duration: .085, noise: .07, redNoise: .011, stellarAmp: .055, stellarPeriod: 3.4
+    var datasets = (window.HOUXING_REAL_DATASETS || []).map(function (dataset) {
+      dataset.data.points = dataset.data.points.map(function (point) { return { x: point[0], y: point[1] }; });
+      dataset.smooth = null;
+      return dataset;
     });
-    var complex = makeSynthetic({
-      seed: 144, total: 9.9, step: .0125, period: .86, phase: .39,
-      depth: .19, duration: .07, noise: .074, redNoise: .018, stellarAmp: .105, stellarAmp2: .035,
-      stellarPeriod: 2.72, gaps: [[2.48,2.66],[5.21,5.38]]
-    });
-    var trap = makeSynthetic({
-      seed: 903, total: 9.4, step: .0125, period: null,
-      fakeEvents: [.72,2.08,3.43,4.81,7.02,8.61],
-      depth: .28, duration: .09, noise: .061, redNoise: .017, stellarAmp: .085, stellarAmp2: .035,
-      stellarPeriod: 2.65, gaps: [[5.48,5.63]]
-    });
-    var longGap = makeSynthetic({
-      seed: 231, total: 12.2, step: .015, period: 1.92, phase: .58,
-      depth: .245, duration: .105, noise: .072, redNoise: .014, stellarAmp: .052,
-      stellarPeriod: 4.15, gaps: [[4.31,4.54],[8.68,8.91]], outliers: [[2.83,-.24],[6.73,.22]]
-    });
-    var alias = makeSynthetic({
-      seed: 552, total: 10.8, step: .0125, period: .74, phase: .31,
-      depth: .31, alternatingDepth: .12, duration: .072, noise: .06, redNoise: .013,
-      stellarAmp: .04, stellarPeriod: 3.25
-    });
-    alias.events = alias.events.filter(function (_, index) { return index % 2 === 0; });
-    alias.displayEvents = alias.events.slice();
-    var timing = makeSynthetic({
-      seed: 881, total: 11.25, step: .0125, period: 1.11, phase: .42, timingJitter: .052,
-      depth: .22, depthWobble: .16, duration: .078, noise: .074, redNoise: .018,
-      stellarAmp: .082, stellarAmp2: .025, stellarPeriod: 3.7, gaps: [[5.7,5.84]]
-    });
-    var ultra = makeSynthetic({
-      seed: 1207, total: 13.1, step: .015, period: 2.28, phase: .64,
-      depth: .155, duration: .095, shapePower: 2, noise: .082, redNoise: .022,
-      stellarAmp: .095, stellarAmp2: .04, stellarPeriod: 4.55,
-      gaps: [[3.83,4.03],[9.48,9.68]], outliers: [[1.45,-.21],[5.54,-.18],[7.37,.24]]
-    });
-
-    var datasets = [
-      {
-        id: "real", short: "鲸鱼座 A", name: "鲸鱼座 A · 清晰的真实信号",
-        desc: "先用这题学会玩法：凹坑明显、周期较短，适合观察整套验证动画。",
-        difficulty: "入门", source: "真实 TESS 数据", kind: "real",
-        data: real, cutoff: REAL_SOURCE.cutoffDays, period: .941449, phase: .35069,
-        smoothRadius: 3, yPad: .08
-      },
-      {
-        id: "weak", short: "天琴座 B", name: "天琴座 B · 微弱信号",
-        desc: "凹坑只有噪声波动的几倍高，需要把整条曲线横着比较。",
-        difficulty: "进阶", source: "教学模拟数据", kind: "sim",
-        data: weak, cutoff: 6.22, period: 1.37, phase: .48,
-        smoothRadius: 4, yPad: .045
-      },
-      {
-        id: "complex", short: "天鹅座 C", name: "天鹅座 C · 恒星自己也在变化",
-        desc: "曲线有慢慢起伏和缺口，考验你能否从大波动里看见短而重复的小凹坑。",
-        difficulty: "困难", source: "教学模拟数据", kind: "sim",
-        data: complex, cutoff: 6.82, period: .86, phase: .39,
-        smoothRadius: 3, yPad: .04
-      },
-      {
-        id: "trap", short: "猎户座 D", name: "猎户座 D · 看似有规律的陷阱",
-        desc: "前半段似乎能凑出一个周期，但后半段未必配合。也可以提交“没有稳定周期”。",
-        difficulty: "陷阱", source: "教学模拟数据", kind: "sim",
-        data: trap, cutoff: 6.34, period: null, phase: null,
-        smoothRadius: 4, yPad: .045
-      },
-      {
-        id: "gap", short: "飞马座 E", name: "飞马座 E · 一次凌日掉进数据缺口",
-        desc: "真正的重复仍在，但中间有一次被观测缺口吞掉。别把“没拍到”误当成“没发生”。",
-        difficulty: "困难", source: "教学模拟数据", kind: "sim",
-        data: longGap, cutoff: 8.05, period: 1.92, phase: .58,
-        smoothRadius: 3, yPad: .045
-      },
-      {
-        id: "alias", short: "仙女座 F", name: "仙女座 F · 半周期诱饵",
-        desc: "深浅凹坑交替出现。机器很容易报出半周期；你要判断哪些凹坑才是同一种事件。",
-        difficulty: "专家", source: "教学模拟数据", kind: "sim",
-        data: alias, cutoff: 7.32, period: 1.48, phase: .31,
-        smoothRadius: 3, yPad: .04
-      },
-      {
-        id: "timing", short: "御夫座 G", name: "御夫座 G · 每次都早一点或晚一点",
-        desc: "凌日时刻会轻微摆动，不会像尺子刻度那样绝对整齐；考验你对“近似周期”的容忍度。",
-        difficulty: "专家", source: "教学模拟数据", kind: "sim",
-        data: timing, cutoff: 7.48, period: 1.11, phase: .42,
-        smoothRadius: 3, yPad: .045
-      },
-      {
-        id: "ultra", short: "凤凰座 H", name: "凤凰座 H · 极弱、长周期、少样本",
-        desc: "可见段只有少数次浅变暗，还混着红噪声和离群点。这题连自动算法也可能犹豫。",
-        difficulty: "极难", source: "教学模拟数据", kind: "sim",
-        data: ultra, cutoff: 8.18, period: 2.28, phase: .64,
-        smoothRadius: 3, yPad: .045
-      }
-    ];
 
     var state = {
       datasetIndex: 0,
@@ -767,6 +601,7 @@
       candidateSource: null,
       autoOptions: [],
       autoRunToken: 0,
+      matchedSignal: null,
       completed: {},
       toastTimer: null
     };
@@ -809,8 +644,9 @@
       });
     }
     function ranges() {
-      var values = validPoints().map(function (p) { return p.y; });
-      var low = Math.min.apply(null, values), high = Math.max.apply(null, values);
+      var values = validPoints().map(function (p) { return p.y; }).sort(function(a,b){return a-b;});
+      var low = values[Math.floor(values.length*.0025)];
+      var high = values[Math.min(values.length-1,Math.ceil(values.length*.9975))];
       var pad = current().yPad || .04;
       return { low: low - pad, high: high + pad };
     }
@@ -830,6 +666,12 @@
     }
     function formatPeriod(days) {
       var minutes = Math.round(days * 24 * 60);
+      if(minutes>=2880){
+        var dayCount=Math.floor(minutes/1440);
+        var dayHours=Math.floor((minutes%1440)/60);
+        var dayMinutes=minutes%60;
+        return dayCount+" 天"+(dayHours?" "+dayHours+" 小时":"")+(dayMinutes?" "+dayMinutes+" 分":"");
+      }
       var hours = Math.floor(minutes / 60), rest = minutes % 60;
       return hours + " 小时" + (rest ? " " + rest + " 分" : "");
     }
@@ -1121,6 +963,7 @@
       state.marks = [];
       state.noPattern = false;
       state.revealed = false;
+      state.matchedSignal = null;
       state.candidatePeriod = null;
       state.candidatePhase = null;
       state.candidateSource = null;
@@ -1148,8 +991,10 @@
       if (!d.smooth) d.smooth = movingMedian(d.data.points, d.smoothRadius);
       document.getElementById("starName").textContent = d.name;
       document.getElementById("starDesc").textContent = d.desc;
-      document.getElementById("sourceBadge").textContent = d.source + " · " + d.difficulty;
-      periodSlider.max = Math.min(2.6, maxTime() / 2.2).toFixed(2);
+      var sourceBadge = document.getElementById("sourceBadge");
+      sourceBadge.textContent = d.source + " · " + d.difficulty + " · 打开原始 FITS ↗";
+      sourceBadge.href = d.url;
+      periodSlider.max = Math.min(12, maxTime() / 1.6).toFixed(2);
       reset(false);
       updateTabs();
     }
@@ -1252,7 +1097,8 @@
 
       if(state.revealed){
         curtain.remove();
-        var hiddenTruth=d.data.events.filter(function(t){return t>d.cutoff;});
+        var revealedSignal=state.matchedSignal || d.signals[0];
+        var hiddenTruth=revealedSignal.events.filter(function(t){return t>d.cutoff;});
         hiddenTruth.forEach(function(time){
           var x=xScale(time);
           mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"3 5"}));
@@ -1321,35 +1167,42 @@
     function scoreAnswer() {
       var d=current();
       if(state.noPattern){
-        return d.period==null?{grade:"hit",title:"判断正确：这题没有稳定周期。",copy:"前半段那些看似相似的凹坑，没有在封存段按同一节奏继续出现。拒绝一个诱人的假规律，也是有效发现。",hidden:"后半段没有延续同一个固定节奏。"}:{grade:"miss",title:"这次过早放弃了：封存段仍在重复。",copy:"后半段出现了与前半段同节奏的变暗。可以回去用 2～3 个凹坑或波形尺再试。",hidden:"封存段存在按固定周期出现的真实凹坑。"};
-      }
-      if(d.period==null){
-        return {grade:"miss",title:"周期尺落空了：这是一道假规律题。",copy:"你在前半段凑出的周期，没有被封存段延续。它很像真实研究中的误报：前面看着顺眼，未来却不再准时出现。",hidden:"后半段的凹坑没有落进同一组预测带。"};
+        return {grade:"miss",signal:d.signals[0],title:"这次过早放弃了：封存段仍在重复。",copy:"这份真实 TESS 数据里至少有一个已确认的凌日周期。可以回去用 2～3 个凹坑、波形尺或机器先验再试。",hidden:"封存段存在与已确认星历相符的真实凹坑。"};
       }
       var predicted=recurrences().filter(function(t){return t>d.cutoff;});
-      var actual=d.data.events.filter(function(t){return t>d.cutoff;});
-      var tolerance=Math.max(.055,Math.min(.16,d.period*.11));
-      var used={};
-      var matches=0,totalError=0;
-      predicted.forEach(function(p){
-        var best=-1,bestDiff=Infinity;
-        actual.forEach(function(a,i){var diff=Math.abs(a-p);if(!used[i]&&diff<bestDiff){best=i;bestDiff=diff;}});
-        if(best>=0&&bestDiff<=tolerance){used[best]=true;matches++;totalError+=bestDiff;}
+      var evaluations=d.signals.map(function(signal){
+        var actual=signal.events.filter(function(t){return t>d.cutoff;});
+        var tolerance=Math.max(.055,Math.min(.18,signal.period*.06));
+        var used={};
+        var matches=0,totalError=0;
+        predicted.forEach(function(p){
+          var closest=-1,closestDiff=Infinity;
+          actual.forEach(function(a,i){var diff=Math.abs(a-p);if(!used[i]&&diff<closestDiff){closest=i;closestDiff=diff;}});
+          if(closest>=0&&closestDiff<=tolerance){used[closest]=true;matches++;totalError+=closestDiff;}
+        });
+        var coverage=actual.length?matches/actual.length:0;
+        var precision=predicted.length?matches/predicted.length:0;
+        var periodError=Math.abs(state.candidatePeriod-signal.period)/signal.period;
+        var hit=matches>0&&coverage>=.66&&precision>=.66&&periodError<.12;
+        var rank=(hit?1000:0)+matches*100+coverage*25+precision*25-Math.min(periodError,2)*10;
+        return {signal:signal,actual:actual,matches:matches,totalError:totalError,coverage:coverage,precision:precision,periodError:periodError,hit:hit,rank:rank};
       });
-      var coverage=actual.length?matches/actual.length:0;
-      var precision=predicted.length?matches/predicted.length:0;
-      var periodError=Math.abs(state.candidatePeriod-d.period)/d.period;
-      var minutes=matches?Math.round(totalError/matches*24*60):null;
-      if(matches&&coverage>=.66&&precision>=.66&&periodError<.12){
-        return {grade:"hit",title:"命中：封存段继续按你的周期变暗。",copy:"你先用前半段提出规律，再让没有看过的数据检验它。预测带与真实凹坑继续重合，平均时间偏差约 "+minutes+" 分钟。",hidden:matches+"/"+actual.length+" 次真实变暗落进预测带，平均偏差约 "+minutes+" 分钟。"};
+      evaluations.sort(function(a,b){return b.rank-a.rank;});
+      var best=evaluations[0];
+      var label=best.signal.label;
+      var minutes=best.matches?Math.round(best.totalError/best.matches*24*60):null;
+      if(best.hit){
+        return {grade:"hit",signal:best.signal,title:"命中 "+label+"：封存段继续按你的周期变暗。",copy:"你只用前半段提出规律，预测带在封存段继续压住真实凹坑；平均时间偏差约 "+minutes+" 分钟。",hidden:best.matches+"/"+best.actual.length+" 次 "+label+" 的已知凌日落进预测带，平均偏差约 "+minutes+" 分钟。"};
       }
-      if(matches){
-        return {grade:"partial",title:"碰中了一部分，但周期还不够完整。",copy:"至少有一次预测压住了真实凹坑，但同时漏掉了别的变暗，或多预测了不存在的变暗。这常见于选中了半周期、双周期或不相邻的凹坑。",hidden:"命中 "+matches+" 次，但封存段共有 "+actual.length+" 次真实变暗。"};
+      if(best.matches){
+        return {grade:"partial",signal:best.signal,title:"碰中了 "+label+" 的一部分，但周期还不够完整。",copy:"至少有一次预测压住了已知凌日，但同时漏掉了别的变暗，或多预测了不存在的变暗。这常见于选中了半周期、双周期或不相邻的凹坑。",hidden:"命中 "+best.matches+" 次，但封存段共有 "+best.actual.length+" 次 "+label+" 的已知凌日。"};
       }
-      return {grade:"miss",title:"没有对上：封存段没有按这把尺子变暗。",copy:"这次选择的周期无法预测后面的数据。换一组更相似、更相邻的凹坑，或用波形尺重新调整。",hidden:"0/"+actual.length+" 次真实变暗落进预测带。"};
+      return {grade:"miss",signal:best.signal,title:"没有对上：封存段没有按这把尺子变暗。",copy:"这次选择的周期无法预测后面的真实 TESS 数据。换一组更相似、更相邻的凹坑，或用波形尺重新调整。",hidden:"0/"+best.actual.length+" 次 "+label+" 的已知凌日落进预测带。"};
     }
     function reveal() {
       if(!candidateReady()||state.revealed)return;
+      var scored=scoreAnswer();
+      state.matchedSignal=scored.signal || null;
       state.revealed=true;
       revealButton.disabled=true; noPatternButton.disabled=true; undoButton.disabled=true; hintButton.disabled=true;
       autoScanButton.disabled=true;
@@ -1357,7 +1210,6 @@
       drawMain({animate:true});
       drawFold(true);
       updateInstructions();
-      var scored=scoreAnswer();
       setTimeout(function(){
         result.className="result show "+(scored.grade==="miss"?"miss":scored.grade==="partial"?"partial":"");
         document.getElementById("resultKicker").textContent=scored.grade==="hit"?"封存验证 · 通过":scored.grade==="partial"?"封存验证 · 部分命中":"封存验证 · 未通过";
@@ -1366,14 +1218,14 @@
         var sourceLabel=state.candidateSource==="auto"?"机器先验候选":state.mode==="wave"?"周期波形":state.marks.length+" 个凹坑";
         document.getElementById("submittedCheck").textContent=state.noPattern?"没有稳定周期":formatPeriod(state.candidatePeriod)+"；由 "+sourceLabel+" 得出。";
         document.getElementById("hiddenCheck").textContent=scored.hidden;
-        document.getElementById("scienceCheck").textContent=scored.grade==="hit"&&current().period?"这是“周期信号候选”，仍需排除双星、恒星活动和仪器误差。":scored.grade==="hit"?"拒绝假规律同样有价值，可减少后续复核浪费。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。";
+        document.getElementById("scienceCheck").textContent=scored.grade==="hit"?"封存段与已确认的 "+scored.signal.label+" 星历相符；游戏只是在真实数据上复现信号发现与盲测过程。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。";
         state.completed[current().id]=scored.grade;
         updateTabs();
         result.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"nearest"});
       },reducedMotion?30:1050);
     }
     function reset(scroll) {
-      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false;
+      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false; state.matchedSignal=null;
       hintButton.disabled=false; hintButton.textContent="给一点提示"; undoButton.disabled=true; noPatternButton.disabled=false;
       autoScanButton.disabled=false;
       result.className="result";
