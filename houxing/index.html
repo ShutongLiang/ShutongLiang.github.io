@@ -904,7 +904,9 @@
         return;
       }
       var top=state.autoOptions[0];
-      var strength=top.score>=7?"较强":top.score>=4?"中等":"较弱";
+      var runner=state.autoOptions[1];
+      var margin=runner?top.relative-runner.relative:100;
+      var strength=margin>=35?"较强":margin>=15?"中等":"较弱";
       document.getElementById("autoSummary").textContent="已联合扫描两个真实观测季，并让周期跨过中间空白继续计时。最可疑的是 "+formatPeriod(top.period)+"，长基线证据“"+strength+"”。下面是周期家族排名，不是行星概率。";
       state.autoOptions.forEach(function(candidate,index){
         var button=document.createElement("button");
@@ -1170,7 +1172,7 @@
           }
         }
       });
-      mainChart.appendChild(svgEl("text",{x:plot.left,y:plot.top-12,fill:"#aaa9c3","font-size":12},"星光越往下，表示那一刻越暗"));
+      mainChart.appendChild(svgEl("text",{x:plot.left,y:82,fill:"#aaa9c3","font-size":12},"星光越往下，表示那一刻越暗"));
       mainChart.appendChild(svgEl("text",{x:plot.right,y:plot.bottom+48,fill:"#77768d","font-size":12,"text-anchor":"end"},"真实时间向后；空白处没有补造数据 →"));
 
       if (state.mode === "wave" && candidateReady() && !state.noPattern) {
