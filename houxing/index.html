@@ -1331,7 +1331,7 @@
         var baseline=(range.high+range.low)/2;
         var scale=35/(range.high-range.low);
         var path=svgEl("path",{
-          d:pathFor(curve,range,function(p){return left+(p.x-start)/(end-start)*(right-left);},function(p){return yMid-(baseline-p.y)*scale;}),
+          d:pathFor(curve,range,function(p){return left+(p.x-start)/(end-start)*(right-left);},function(p){return yMid+(baseline-p.y)*scale;}),
           fill:"none",stroke:hidden?"#65e3dc":"#aa91ff","stroke-width":hidden?3.2:2.5,"stroke-linejoin":"round","stroke-linecap":"round"
         });
         foldChart.appendChild(path);
