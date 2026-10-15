@@ -1297,7 +1297,16 @@
       d.segments.forEach(function(segment){
         var centers=recurrenceTimes(state.candidatePeriod,state.candidatePhase,segment.start+state.candidatePeriod*.42,segment.end-state.candidatePeriod*.42);
         var wanted=segment.role==="reveal"?1:2;
-        if(centers.length>wanted){
+        var middle=(segment.start+segment.end)/2;
+        var covered=centers.map(function(center){
+          var radius=state.candidatePeriod*.45;
+          var count=d.smooth.reduce(function(total,p){return total+(p.y!=null&&p.x>=center-radius&&p.x<=center+radius?1:0);},0);
+          return {center:center,count:count,distance:Math.abs(center-middle)};
+        }).filter(function(item){return item.count>=8;});
+        if(covered.length){
+          covered.sort(function(a,b){return b.count-a.count||a.distance-b.distance;});
+          centers=covered.slice(0,wanted).map(function(item){return item.center;}).sort(function(a,b){return a-b;});
+        }else if(centers.length>wanted){
           centers=wanted===1?[centers[Math.floor(centers.length/2)]]:[centers[Math.floor(centers.length*.3)],centers[Math.floor(centers.length*.7)]];
         }
         centers.forEach(function(center){rows.push({center:center,segment:segment});});
