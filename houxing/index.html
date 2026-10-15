@@ -458,10 +458,10 @@
     <section class="intro">
       <p class="eyebrow">周期验证实验室</p>
       <h1>先选出规律，再让未来作证。</h1>
-      <p>八道题全部来自真实 TESS 观测。选择 2～3 次相似的变暗，或者先让系统自动寻找可疑周期；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
+      <p>十道题全部来自真实 TESS 观测：前八题练手，最后两题是尚未确认的预筛候选。选择 2～3 次相似的变暗，或者先让系统自动寻找可疑周期；确认后才打开封存数据，看后面的星光是否准时变暗。</p>
     </section>
 
-    <p class="dataset-label">先选一颗星：8 段真实 TESS 光变，从清晰热木星到活跃恒星与多行星系统</p>
+    <p class="dataset-label">先选一颗星：8 道已知信号练习 + 2 道真实候选盲测</p>
     <div class="dataset-tabs" id="datasetTabs"></div>
 
     <section class="lab">
@@ -571,7 +571,7 @@
       <article><span>03 · 系统</span><h3>封存后验证</h3><p>把周期向未来重复，再打开玩家没看过的数据对答案。</p></article>
       <article><span>04 · 复核</span><h3>候选继续晋级</h3><p>命中只说明值得查；还要排除双星、恒星活动和仪器问题。</p></article>
     </section>
-    <p class="footnote">全部 8 题均为 NASA/MAST 公开的 TESS Data Alerts 光变 FITS。页面仅做 QUALITY=0 筛选、0.7 天局部中值去趋势、20 分钟分箱和极端离群点剔除；没有人工制造或注入任何凌日。每题右上角可打开对应的 MAST 原始 FITS。机器先验只读取封存线左侧，不会偷看答案。</p>
+    <p class="footnote">全部 10 题均为 NASA/MAST 公开的 TESS Data Alerts 光变 FITS。页面仅做 QUALITY=0 筛选、0.7 天局部中值去趋势、20 分钟分箱和极端离群点剔除；没有人工制造或注入任何凌日。末两题在建题时仍标为 PC（行星候选），不是已确认行星：目录周期和星历没有写进网页数据，判分直接比较封存光变与玩家预测。每题右上角可打开对应的 MAST 原始 FITS，机器先验也只读取封存线左侧。</p>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -602,6 +602,7 @@
       autoOptions: [],
       autoRunToken: 0,
       matchedSignal: null,
+      validation: null,
       completed: {},
       toastTimer: null
     };
@@ -964,6 +965,7 @@
       state.noPattern = false;
       state.revealed = false;
       state.matchedSignal = null;
+      state.validation = null;
       state.candidatePeriod = null;
       state.candidatePhase = null;
       state.candidateSource = null;
@@ -1097,12 +1099,19 @@
 
       if(state.revealed){
         curtain.remove();
-        var revealedSignal=state.matchedSignal || d.signals[0];
-        var hiddenTruth=revealedSignal.events.filter(function(t){return t>d.cutoff;});
-        hiddenTruth.forEach(function(time){
-          var x=xScale(time);
-          mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"3 5"}));
-        });
+        if(d.blind&&state.validation){
+          state.validation.events.forEach(function(event){
+            var x=xScale(event.center),color=event.supports?"#65e3dc":"#ff9a9a";
+            mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:color,"stroke-width":2,"stroke-dasharray":"3 5"}));
+            mainChart.appendChild(svgEl("text",{x:x,y:plot.top+18,fill:color,"font-size":11,"font-weight":850,"text-anchor":"middle"},event.supports?"下凹":"偏弱"));
+          });
+        }else{
+          var revealedSignal=state.matchedSignal || d.signals[0];
+          revealedSignal.events.filter(function(t){return t>d.cutoff;}).forEach(function(time){
+            var x=xScale(time);
+            mainChart.appendChild(svgEl("line",{x1:x,x2:x,y1:plot.top,y2:plot.bottom,stroke:"#65e3dc","stroke-width":2,"stroke-dasharray":"3 5"}));
+          });
+        }
         if(options.animate&&!reducedMotion){
           hiddenSmoothPath.style.strokeDasharray="1";
           hiddenSmoothPath.style.strokeDashoffset="1";
@@ -1164,8 +1173,120 @@
       });
       document.getElementById("foldScore").textContent=state.revealed?"封存圈已加入比较":"先用可见数据试排";
     }
+    function allResiduals() {
+      var points=current().data.points.filter(function(p){return p.y!=null;});
+      if(!points.length)return [];
+      var cadence=points.length>1?median(points.slice(1).map(function(p,index){return p.x-points[index].x;}).filter(function(v){return v>0&&v<.08;})):.0125;
+      var radius=Math.max(7,Math.round(.24/Math.max(.004,cadence)));
+      return points.map(function(point,index){
+        var values=[];
+        for(var j=Math.max(0,index-radius);j<=Math.min(points.length-1,index+radius);j++){
+          if(Math.abs(points[j].x-point.x)<=.28)values.push(points[j].y);
+        }
+        return {x:point.x,y:point.y-median(values)};
+      });
+    }
+    function recurrenceTimes(period,phase,minimum,maximum) {
+      if(!Number.isFinite(period)||period<=0||!Number.isFinite(phase))return [];
+      var first=((phase%period)+period)%period;
+      while(first<minimum-.001)first+=period;
+      while(first-period>=minimum-.001)first-=period;
+      var out=[];
+      for(var time=first;time<=maximum+.001;time+=period){
+        if(time>=minimum-.001)out.push(time);
+      }
+      return out;
+    }
+    function eventEvidence(series,centers,width) {
+      var events=[];
+      centers.forEach(function(center){
+        var inside=[],shoulders=[];
+        series.forEach(function(point){
+          var distance=Math.abs(point.x-center);
+          if(distance<=width/2)inside.push(point.y);
+          else if(distance>=width*1.35&&distance<=width*3.6)shoulders.push(point.y);
+        });
+        if(inside.length<2||shoulders.length<6)return;
+        var baseline=median(shoulders);
+        var depth=baseline-median(inside);
+        var localNoise=Math.max(
+          .00003,
+          1.4826*median(shoulders.map(function(value){return Math.abs(value-baseline);}))
+        );
+        var uncertainty=localNoise/Math.sqrt(Math.max(1,inside.length/2));
+        events.push({center:center,depth:depth,noise:uncertainty,supports:depth>uncertainty*1.15});
+      });
+      var depths=events.map(function(event){return event.depth;});
+      var depth=median(depths);
+      var scatter=events.length>1?1.4826*median(depths.map(function(value){return Math.abs(value-depth);})):0;
+      var typicalNoise=median(events.map(function(event){return event.noise;}));
+      var combinedNoise=Math.max(.00003,typicalNoise/Math.sqrt(Math.max(1,events.length)),scatter/Math.sqrt(Math.max(1,events.length)));
+      return {
+        events:events,
+        depth:depth,
+        noise:combinedNoise,
+        snr:events.length?depth/combinedNoise:0,
+        supportFraction:events.length?events.filter(function(event){return event.supports;}).length/events.length:0,
+        coverage:centers.length?events.length/centers.length:0
+      };
+    }
+    function fitBlindWindow(series) {
+      var d=current(),period=state.candidatePeriod,phase=state.candidatePhase;
+      var centers=recurrenceTimes(period,phase,0,d.cutoff);
+      var widths=[.03,.04,.05,.065,.085,.11,.145,.19].filter(function(width){return width<=Math.min(.22,period*.22);});
+      if(!widths.length)widths=[Math.max(.02,period*.16)];
+      var best=null;
+      widths.forEach(function(width){
+        var evidence=eventEvidence(series,centers,width);
+        var score=evidence.snr*(.45+.55*evidence.supportFraction)*Math.sqrt(evidence.coverage)*Math.min(1,evidence.events.length/2);
+        if(!best||score>best.score)best={width:width,evidence:evidence,score:score};
+      });
+      return best;
+    }
+    function formatDepth(depth) {
+      var ppm=Math.max(0,Math.round(depth*10000));
+      return ppm>=10000?Math.max(0,depth).toFixed(2)+"%":ppm+" ppm";
+    }
+    function scoreBlindAnswer() {
+      var d=current();
+      if(state.noPattern){
+        return {grade:"miss",title:"这两题来自预筛池，请提交一个具体周期。",copy:"“没有周期”无法参加这次封存预测。你可以先点“自动找周期”，再从只看前段数据得出的候选里选一个。",hidden:"没有具体预测，所以封存段无法对这把周期尺做检验。",validation:null};
+      }
+      var series=allResiduals();
+      var fitted=fitBlindWindow(series);
+      var hiddenCenters=recurrenceTimes(state.candidatePeriod,state.candidatePhase,d.cutoff,maxTime());
+      var hidden=eventEvidence(series,hiddenCenters,fitted.width);
+      var controls=[];
+      for(var index=1;index<49;index++){
+        var offset=state.candidatePeriod*index/49;
+        var circularDistance=Math.min(offset,state.candidatePeriod-offset);
+        if(circularDistance<fitted.width*1.6)continue;
+        var shifted=recurrenceTimes(state.candidatePeriod,state.candidatePhase+offset,d.cutoff,maxTime());
+        controls.push(eventEvidence(series,shifted,fitted.width).snr);
+      }
+      var percentile=(1+controls.filter(function(value){return value<=hidden.snr;}).length)/(1+controls.length);
+      var halfPhase=eventEvidence(series,recurrenceTimes(state.candidatePeriod,state.candidatePhase+state.candidatePeriod/2,d.cutoff,maxTime()),fitted.width);
+      var harmonic=halfPhase.events.length&&halfPhase.snr>=2.2&&halfPhase.depth>=hidden.depth*.55&&halfPhase.supportFraction>=.35;
+      var jointSnr=Math.sqrt(Math.pow(Math.max(0,fitted.evidence.snr),2)+Math.pow(Math.max(0,hidden.snr),2));
+      var supported=hidden.events.filter(function(event){return event.supports;}).length;
+      var percentileLabel=Math.round(percentile*100)+"%";
+      var validation={events:hidden.events,width:fitted.width,visible:fitted.evidence,hidden:hidden,percentile:percentile,harmonic:harmonic};
+      if(harmonic&&jointSnr>=2.3&&percentile>=.86){
+        return {grade:"partial",title:"预测抓到了一部分，但周期可能长了一倍。",copy:"封存段确实在你的预测位置变暗，可是两次预测之间的半程也出现了相似下降。试着把周期除以 2，再封存一次。",hidden:"预测位置与半周期位置都显著变暗；当前答案更像真周期的两倍。",validation:validation};
+      }
+      var hit=fitted.evidence.events.length>=2&&hidden.events.length>=1&&hidden.coverage>=.5&&hidden.depth>0&&hidden.snr>=1.25&&jointSnr>=2.15&&percentile>=.9;
+      if(hit){
+        return {grade:"hit",title:"封存段也准时变暗：这条候选值得晋级。",copy:"网页没有拿目录周期对答案。它只把你的周期延伸到未见数据，再做同位置与随机错位比较；封存段的合并下降约 "+formatDepth(hidden.depth)+"。",hidden:"封存段 "+supported+"/"+hidden.events.length+" 个可检验窗口单独达到下凹阈值；合并证据超过 "+percentileLabel+" 的随机错位。",validation:validation};
+      }
+      var partial=hidden.depth>0&&hidden.snr>=.7&&jointSnr>=1.5&&percentile>=.78;
+      if(partial){
+        return {grade:"partial",title:"有一点对齐，但证据还不够稳。",copy:"封存段在预测位置略有变暗，不过强度或重复性还没有越过本页的盲测门槛。微调周期和起点，或比较机器给出的另一个候选。",hidden:"合并下降约 "+formatDepth(hidden.depth)+"，超过 "+percentileLabel+" 的随机错位，但尚未同时满足全部门槛。",validation:validation};
+      }
+      return {grade:"miss",title:"这把周期尺没有通过封存检验。",copy:"在未见数据里，预测位置没有比随机错位更稳定地变暗。换一组相似凹坑，或试试机器先验的下一名。",hidden:"预测位置的合并证据只超过 "+percentileLabel+" 的随机错位。",validation:validation};
+    }
     function scoreAnswer() {
       var d=current();
+      if(d.blind)return scoreBlindAnswer();
       if(state.noPattern){
         return {grade:"miss",signal:d.signals[0],title:"这次过早放弃了：封存段仍在重复。",copy:"这份真实 TESS 数据里至少有一个已确认的凌日周期。可以回去用 2～3 个凹坑、波形尺或机器先验再试。",hidden:"封存段存在与已确认星历相符的真实凹坑。"};
       }
@@ -1203,6 +1324,7 @@
       if(!candidateReady()||state.revealed)return;
       var scored=scoreAnswer();
       state.matchedSignal=scored.signal || null;
+      state.validation=scored.validation || null;
       state.revealed=true;
       revealButton.disabled=true; noPatternButton.disabled=true; undoButton.disabled=true; hintButton.disabled=true;
       autoScanButton.disabled=true;
@@ -1218,14 +1340,16 @@
         var sourceLabel=state.candidateSource==="auto"?"机器先验候选":state.mode==="wave"?"周期波形":state.marks.length+" 个凹坑";
         document.getElementById("submittedCheck").textContent=state.noPattern?"没有稳定周期":formatPeriod(state.candidatePeriod)+"；由 "+sourceLabel+" 得出。";
         document.getElementById("hiddenCheck").textContent=scored.hidden;
-        document.getElementById("scienceCheck").textContent=scored.grade==="hit"?"封存段与已确认的 "+scored.signal.label+" 星历相符；游戏只是在真实数据上复现信号发现与盲测过程。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。";
+        document.getElementById("scienceCheck").textContent=current().blind
+          ? (scored.grade==="hit"?"这只证明信号能在未见数据中复现，仍不等于确认行星；还要排除食双星、恒星活动和仪器效应。":scored.grade==="partial"?"它仍可继续调整，但目前不能晋级为高概率候选。":"这次周期不晋级；盲测失败不代表这颗星一定没有别的信号。")
+          : (scored.grade==="hit"?"封存段与已确认的 "+scored.signal.label+" 星历相符；游戏只是在真实数据上复现信号发现与盲测过程。":"这次答案不晋级，但会帮助校准玩家对噪声与真信号的判断。");
         state.completed[current().id]=scored.grade;
         updateTabs();
         result.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"nearest"});
       },reducedMotion?30:1050);
     }
     function reset(scroll) {
-      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false; state.matchedSignal=null;
+      state.marks=[]; state.candidatePeriod=null; state.candidatePhase=null; state.candidateSource=null; state.noPattern=false; state.hint=false; state.revealed=false; state.matchedSignal=null; state.validation=null;
       hintButton.disabled=false; hintButton.textContent="给一点提示"; undoButton.disabled=true; noPatternButton.disabled=false;
       autoScanButton.disabled=false;
       result.className="result";
@@ -1254,7 +1378,7 @@
     hintButton.addEventListener("click",function(){
       if(state.revealed)return;
       state.hint=!state.hint; hintButton.textContent=state.hint?"收起提示":"给一点提示"; drawMain();
-      showToast(state.hint?(current().period?"虚线圈只标出值得比较的位置，不会替你选周期。":"提示：这题也许不该强行找周期。"):"提示已收起。");
+      showToast(state.hint?(current().blind?"盲测题不显示目录提示；可以用“自动找周期”获得只看可见段的先验。":current().period?"虚线圈只标出值得比较的位置，不会替你选周期。":"提示：这题也许不该强行找周期。"):"提示已收起。");
     });
     noPatternButton.addEventListener("click",function(){
       if(state.revealed)return;
