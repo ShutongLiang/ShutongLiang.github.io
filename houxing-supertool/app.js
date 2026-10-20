@@ -9,13 +9,19 @@
     mode: $("#runMode"), button: $("#scanButton"), status: $("#engineStatus"),
     empty: $("#emptyState"), content: $("#resultsContent"), panel: $("#resultsPanel"),
     message: $("#jobMessage"), progress: $("#progressBar"), progressNumber: $("#progressNumber"),
-    candidateList: $("#candidateList"), reveal: $("#revealButton"), toast: $("#toast")
+    candidateList: $("#candidateList"), reveal: $("#revealButton"), toast: $("#toast"),
+    agent: $("#agentConsole"), agentBody: $("#agentConsoleBody"), agentState: $("#agentState"),
+    agentNarrative: $("#agentNarrative"), agentLog: $("#agentLog"), agentElapsed: $("#agentElapsed"),
+    agentActions: $("#agentActions"), agentPercent: $("#agentPercent")
   };
   let pollTimer = null;
   let currentJobId = null;
   let currentResult = null;
   let activeCandidate = null;
   let vaultRevealed = false;
+  let latestJob = null;
+  let renderedLogJob = null;
+  let renderedLogSequence = 0;
 
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>'"]/g, (char) => ({
@@ -26,6 +32,108 @@
   function fmt(value, digits = 1) {
     if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
     return Number(value).toLocaleString("zh-CN", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  }
+
+  const stageNames = {
+    queued: "队列", starting: "启动", discovering: "档案", downloading: "下载",
+    preparing: "封存", searching: "搜索", ranking: "排序", vetting: "排假",
+    catalog: "查重", rendering: "制图", complete: "完成", failed: "错误"
+  };
+
+  const metricNames = {
+    mission: "任务", target: "目标", found: "发现产品", selected: "选用观测段",
+    mode: "模式", segment: "观测段", cadence_s: "采样秒", files: "文件",
+    point_cap: "单段点数上限", discovery_segments: "发现段", holdout_segment: "封存段",
+    period_max_days: "最长周期/天", duration_templates: "时长模板", branches: "支路",
+    passes_each: "每支路扫描", points: "处理点数", cadences: "光度点", pass: "轮次",
+    new_candidates: "新增假设", branch_total: "支路累计", periodic: "周期假设",
+    single: "单次事件", double: "双次事件", raw: "原始假设", groups: "候选组",
+    masked_signals: "已遮挡信号", masks: "遮挡数", residual: "残差假设",
+    appended_groups: "追加候选组", holdout: "封存段", measured_groups: "已回测组",
+    branch_candidates: "支路假设", candidate_groups: "融合候选组", fused_groups: "融合组",
+    review_candidates: "复核候选", checks_each: "检查项", tic_id: "TIC",
+    ranked_candidates: "已排名", candidates: "候选", folds: "折叠图",
+    page_candidates: "页面候选", candidate_pool: "候选池", runtime_s: "用时秒",
+    storage: "存储", cache: "缓存"
+  };
+
+  function formatElapsed(seconds) {
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    return hours
+      ? `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+      : `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function eventTime(value) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? "--:--:--" : parsed.toLocaleTimeString("zh-CN", { hour12: false });
+  }
+
+  function metricValue(value) {
+    if (value === null || value === undefined) return "—";
+    if (typeof value === "number") return value.toLocaleString("zh-CN", { maximumFractionDigits: 3 });
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
+  }
+
+  function updateAgentClock() {
+    if (!latestJob || ui.agent.hidden) return;
+    const created = new Date(latestJob.created_at).getTime();
+    const liveSeconds = Number.isFinite(created) ? (Date.now() - created) / 1000 : 0;
+    const elapsed = latestJob.status === "complete" && latestJob.result?.runtime_seconds !== undefined
+      ? latestJob.result.runtime_seconds
+      : liveSeconds;
+    ui.agentElapsed.textContent = formatElapsed(elapsed);
+  }
+
+  function renderAgentConsole(job) {
+    latestJob = job;
+    ui.agent.hidden = false;
+    ui.agent.className = `agent-console ${job.status || "running"}`;
+    ui.agentState.textContent = job.status === "complete"
+      ? "分析完成 · 科学结果已锁定"
+      : job.status === "failed"
+        ? "任务停止 · 已保留错误现场"
+        : job.status === "queued"
+          ? "已排队 · 等待研究代理接管"
+          : `${job.target || "目标"} · ${stageNames[job.stage] || "计算中"}`;
+    ui.agentNarrative.textContent = job.message || "正在等待下一条真实计算事件";
+    ui.agentPercent.textContent = `${Math.round(Number(job.percent) || 0)}%`;
+    const events = Array.isArray(job.events) ? job.events : [];
+    ui.agentActions.textContent = events.length.toLocaleString("zh-CN");
+    updateAgentClock();
+
+    if (renderedLogJob !== job.id) {
+      renderedLogJob = job.id;
+      renderedLogSequence = 0;
+      ui.agentLog.innerHTML = '<div class="terminal-wait"><span>$</span> 正在接收后台真实事件…</div>';
+    }
+    const nearBottom = ui.agentLog.scrollHeight - ui.agentLog.scrollTop - ui.agentLog.clientHeight < 90;
+    const additions = events.filter((event) => Number(event.seq || 0) > renderedLogSequence);
+    if (additions.length) ui.agentLog.querySelector(".terminal-wait")?.remove();
+    additions.forEach((event) => {
+      const metrics = Object.entries(event.metrics || {}).filter(([, value]) => value !== null && value !== undefined);
+      const command = event.command
+        ? `<code><i>$</i><span>${escapeHtml(event.command)}</span></code>`
+        : "";
+      const metricHtml = metrics.length
+        ? `<div class="terminal-metrics">${metrics.map(([key, value]) => `<span><i>${escapeHtml(metricNames[key] || key)}</i><b>${escapeHtml(metricValue(value))}</b></span>`).join("")}</div>`
+        : "";
+      const message = event.message && event.message !== event.title
+        ? `<p>${escapeHtml(event.message)}</p>`
+        : "";
+      ui.agentLog.insertAdjacentHTML("beforeend", `<article class="terminal-entry level-${escapeHtml(event.level || "info")}" data-seq="${Number(event.seq) || 0}">
+        <div class="terminal-line"><time>${escapeHtml(eventTime(event.at))}</time><span>${escapeHtml(stageNames[event.stage] || event.stage || "任务")}</span><b>${escapeHtml(event.title || event.message || "执行动作")}</b></div>
+        ${message}${command}${metricHtml}
+      </article>`);
+      renderedLogSequence = Math.max(renderedLogSequence, Number(event.seq) || 0);
+    });
+    if (nearBottom || job.status === "running" || job.status === "queued") {
+      ui.agentLog.scrollTop = ui.agentLog.scrollHeight;
+    }
   }
 
   function showToast(message) {
@@ -69,6 +177,7 @@
   }
 
   function renderProgress(job) {
+    renderAgentConsole(job);
     const index = stageIndex(job.stage);
     $$("#pipeline li").forEach((item, itemIndex) => {
       item.classList.toggle("done", job.status === "complete" || itemIndex < index);
@@ -91,6 +200,10 @@
     clearTimeout(pollTimer);
     currentResult = null;
     activeCandidate = null;
+    latestJob = null;
+    renderedLogJob = null;
+    renderedLogSequence = 0;
+    ui.agent.hidden = true;
     ui.button.disabled = true;
     ui.button.querySelector("span").textContent = "提交中…";
     ui.content.hidden = true;
@@ -146,10 +259,8 @@
         return;
       }
       ui.button.disabled = true;
-      ui.empty.hidden = false;
+      ui.empty.hidden = true;
       ui.content.hidden = true;
-      ui.empty.querySelector("h2").textContent = `${job.target} · ${Math.round(job.percent || 0)}%`;
-      ui.empty.querySelector("p").textContent = job.message || "正在计算";
       pollTimer = setTimeout(() => pollJob(jobId), 1600);
     } catch (error) {
       if (!quiet) renderFailure(error.message);
@@ -406,6 +517,27 @@
     showToast("已填入示例目标；点“实时扫描”才会现场计算。");
   }));
   ui.reveal.addEventListener("click", revealVault);
+  $("#consoleToggle").addEventListener("click", (event) => {
+    const expanded = event.currentTarget.getAttribute("aria-expanded") === "true";
+    event.currentTarget.setAttribute("aria-expanded", String(!expanded));
+    event.currentTarget.querySelector("span").textContent = expanded ? "展开过程" : "收起过程";
+    event.currentTarget.querySelector("i").textContent = expanded ? "+" : "−";
+    ui.agentBody.hidden = expanded;
+  });
+  $("#copyAgentLog").addEventListener("click", async () => {
+    const events = Array.isArray(latestJob?.events) ? latestJob.events : [];
+    const text = events.map((event) => {
+      const command = event.command ? `\n$ ${event.command}` : "";
+      const metrics = Object.entries(event.metrics || {}).map(([key, value]) => `${key}=${metricValue(value)}`).join(" ");
+      return `[${eventTime(event.at)}] [${stageNames[event.stage] || event.stage}] ${event.title}\n${event.message || ""}${command}${metrics ? `\n${metrics}` : ""}`;
+    }).join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast("真实计算日志已复制");
+    } catch (_error) {
+      showToast("浏览器不允许复制，请手动选择日志");
+    }
+  });
   $("#modeSwitch").addEventListener("click", (event) => {
     const pressed = event.currentTarget.getAttribute("aria-pressed") !== "true";
     event.currentTarget.setAttribute("aria-pressed", String(pressed));
@@ -420,4 +552,5 @@
   });
 
   checkHealth();
+  setInterval(updateAgentClock, 1000);
 })();
