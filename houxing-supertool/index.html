@@ -4,110 +4,59 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#061018" />
-    <meta name="description" content="候星超级工具 v0.8 真实数据演示：多支路搜索、候选排序、封存验证与专业证据。" />
-    <title>候星 · 超级工具演示</title>
+    <meta name="description" content="候星超级工具：输入星表编号，实时下载真实观测并搜索行星候选。" />
+    <title>候星 · 实时超级工具</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="starfield" aria-hidden="true"></div>
     <header class="topbar">
-      <a class="brand" href="#top" aria-label="候星首页">
-        <span class="brand-mark" aria-hidden="true"><i></i></span>
-        <span><strong>候星</strong><small>HOUXING LAB</small></span>
-      </a>
-      <div class="topbar-center"><span class="live-dot"></span> v0.8-alpha5 · 预计算演示</div>
-      <button class="mode-switch" id="modeSwitch" type="button" aria-pressed="false">
-        <span>小白模式</span><i></i><span>专业模式</span>
-      </button>
+      <a class="brand" href="#top" aria-label="候星首页"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>HOUXING LIVE</small></span></a>
+      <div class="topbar-center" id="engineStatus"><span class="live-dot"></span> 正在连接本地计算引擎…</div>
+      <button class="mode-switch" id="modeSwitch" type="button" aria-pressed="false"><span>小白模式</span><i></i><span>专业模式</span></button>
     </header>
 
     <main id="top">
       <section class="hero wrap">
-        <div class="hero-copy">
-          <p class="eyebrow">自动行星候选工厂 / REAL TESS DATA</p>
-          <h1>给我一颗星，<br /><em>把值得看的信号留下。</em></h1>
-          <p class="hero-lead">系统自动找齐 TESS 数据，用多条光变支路独立搜索、合并重复周期、排查假信号，再用没有参与搜索的观测季检验预测。</p>
-        </div>
-        <div class="orbit-visual" aria-hidden="true">
-          <div class="sun"></div><div class="orbit orbit-a"><span></span></div><div class="orbit orbit-b"><span></span></div><div class="transit-line"></div>
-          <div class="visual-label"><b>一次按钮</b><span>从编号到候选证据</span></div>
-        </div>
+        <div class="hero-copy"><p class="eyebrow">LIVE ARCHIVE SEARCH / REAL SCIENCE DATA</p><h1>输入一颗星，<br /><em>现场算给你看。</em></h1><p class="hero-lead">这不是预先准备好的演示。每次点击都会用 Lightkurve 查找 MAST 数据，下载到 Passport，再现场运行多支路、多行星和封存检验。</p></div>
+        <div class="orbit-visual" aria-hidden="true"><div class="sun"></div><div class="orbit orbit-a"><span></span></div><div class="orbit orbit-b"><span></span></div><div class="transit-line"></div><div class="visual-label"><b>真实计算</b><span>从档案到候选</span></div></div>
       </section>
 
       <section class="search-deck wrap" aria-labelledby="searchTitle">
-        <div class="search-copy"><span class="section-number">01</span><div><p class="eyebrow" id="searchTitle">START A SCAN</p><h2>输入一颗星的 TIC 编号</h2><p>本页使用四个已经跑完的真实样本演示；正式版会把新目标提交给后台。</p></div></div>
-        <form class="search-form" id="searchForm"><label for="ticInput">TIC</label><input id="ticInput" inputmode="numeric" autocomplete="off" value="354944123" aria-describedby="searchHint" /><button type="submit"><span>一键扫描</span><b aria-hidden="true">→</b></button></form>
-        <div class="demo-targets" id="demoTargets" aria-label="演示目标"></div>
-        <p class="form-hint" id="searchHint">试试上面的真实示范目标。候选分只用于排序，不是“行星概率”。</p>
+        <div class="search-copy"><span class="section-number">01</span><div><p class="eyebrow" id="searchTitle">START A LIVE SCAN</p><h2>输入 TIC、KIC、EPIC 或星名</h2><p>普通模式自动选 5 个有代表性的观测段；深度模式选 8 个并扩展长周期搜索。</p></div></div>
+        <form class="search-form live-form" id="searchForm"><select id="missionSelect" aria-label="观测任务"><option value="TESS">TESS</option><option value="Kepler">Kepler</option><option value="K2">K2</option></select><input id="ticInput" autocomplete="off" value="TIC 354944123" placeholder="例如 TIC 354944123" aria-describedby="searchHint" /><select id="runMode" aria-label="搜索深度"><option value="standard">普通</option><option value="deep">深度</option></select><button id="scanButton" type="submit"><span>实时扫描</span><b aria-hidden="true">→</b></button></form>
+        <div class="demo-targets" aria-label="输入示例"><button class="target-chip" type="button" data-target="TIC 354944123" data-mission="TESS">TIC 354944123</button><button class="target-chip" type="button" data-target="TIC 53498154" data-mission="TESS">TIC 53498154</button><button class="target-chip" type="button" data-target="Kepler-10" data-mission="Kepler">Kepler-10</button></div>
+        <p class="form-hint" id="searchHint">实时任务可能需要几分钟到几十分钟。数据和结果缓存在 Passport，再次运行不会重复下载。</p>
       </section>
 
       <section class="workbench wrap" id="workbench" aria-live="polite">
         <aside class="pipeline-panel">
-          <div class="panel-kicker">自动流水线</div><h2>机器正在做什么</h2>
-          <ol class="pipeline" id="pipeline">
-            <li data-step="0"><span>01</span><div><b>找齐数据</b><small>Lightkurve 产品发现 + 本地可靠下载</small></div><i></i></li>
-            <li data-step="1"><span>02</span><div><b>多路清洗</b><small>PDCSAP / SAP / CBV 分开处理</small></div><i></i></li>
-            <li data-step="2"><span>03</span><div><b>独立找信号</b><small>BLS + 事件优先 + 残差再搜索</small></div><i></i></li>
-            <li data-step="3"><span>04</span><div><b>合并与排假</b><small>压缩别名，检查奇偶、次食、V 形与质心</small></div><i></i></li>
-            <li data-step="4"><span>05</span><div><b>封存验证</b><small>用未参与搜索的观测季检验预测</small></div><i></i></li>
-          </ol>
-          <div class="pipeline-note"><span class="status-dot"></span><p><b>演示数据已预计算</b><br />网页不会临时下载几百 MB 数据或让你等十几分钟。</p></div>
+          <div class="panel-kicker">实时任务</div><h2>后台正在做什么</h2>
+          <ol class="pipeline" id="pipeline"><li data-stage="discovering"><span>01</span><div><b>找数据</b><small>Lightkurve 查 MAST 产品</small></div><i></i></li><li data-stage="downloading"><span>02</span><div><b>下载与校验</b><small>断点续传到 Passport</small></div><i></i></li><li data-stage="searching"><span>03</span><div><b>现场搜索</b><small>BLS + 事件优先 + 残差</small></div><i></i></li><li data-stage="ranking"><span>04</span><div><b>合并排假</b><small>谐波、物理和多支路证据</small></div><i></i></li><li data-stage="catalog"><span>05</span><div><b>封存与查重</b><small>排名锁定后才查已知目录</small></div><i></i></li></ol>
+          <div class="pipeline-note"><span class="status-dot"></span><p id="jobMessage"><b>等待任务</b><br />连接成功后可以输入任意可查目标。</p></div><div class="progress-track"><i id="progressBar"></i></div><small class="progress-number" id="progressNumber">0%</small>
         </aside>
 
         <div class="results-panel" id="resultsPanel">
-          <div class="empty-state" id="emptyState"><div class="radar"><i></i><span></span></div><h2>等待扫描目标</h2><p>输入上方任一示范 TIC，然后点“一键扫描”。</p></div>
+          <div class="empty-state" id="emptyState"><div class="radar"><i></i><span></span></div><h2>等待实时扫描</h2><p>输入目标后，这里会显示真实进度和现算结果。</p></div>
           <div class="results-content" id="resultsContent" hidden>
-            <header class="target-header">
-              <div><p class="eyebrow" id="targetLabel">TESS TARGET</p><h2 id="targetName">TIC —</h2><p id="targetSummary"></p></div><div class="target-meta" id="targetMeta"></div>
-            </header>
-            <div class="candidate-heading"><div><span class="section-number">02</span><h3>机器建议先看这几个</h3></div><p>点击卡片切换候选</p></div>
-            <div class="candidate-list" id="candidateList"></div>
-
-            <article class="candidate-detail">
-              <header class="detail-header">
-                <div class="rank-badge" id="rankBadge">01</div>
-                <div><p class="eyebrow">SELECTED CANDIDATE</p><h2><span id="periodValue">—</span> <small>天</small></h2><p id="plainConclusion"></p></div>
-                <div class="score-block"><span>候选优先级</span><strong id="scoreValue">—</strong><small>不是概率</small></div>
-              </header>
-
-              <div class="evidence-grid">
-                <section class="chart-card discovery-card">
-                  <div class="card-title"><div><span class="tag cyan">发现数据</span><h3>重复变暗叠在一起</h3></div><div class="chart-legend"><i></i>分箱中位数</div></div>
-                  <svg id="discoveryChart" class="fold-chart" role="img" aria-label="发现数据相位折叠图"></svg>
-                  <div class="chart-axis"><span>早半个周期</span><b>预计凌日中心</b><span>晚半个周期</span></div><p class="chart-caption" id="discoveryCaption"></p>
-                </section>
-                <section class="plain-card">
-                  <div class="card-title"><div><span class="tag gold">大白话结论</span><h3>为什么它排在这里</h3></div></div>
-                  <div class="reason-list" id="reasonList"></div><div class="branch-strip" id="branchStrip"></div>
-                </section>
-              </div>
-
-              <section class="vault-card" id="vaultCard">
-                <div class="vault-copy"><span class="tag violet">封存开奖</span><h3>机器没看过的后续观测，真的按时变暗了吗？</h3><p>先用前面的观测找周期，再把预测投向封存的后一个 Sector。点开奖之前，这部分不参与搜索。</p><button id="revealButton" type="button"><span>打开封存观测季</span><b>✦</b></button><div class="vault-verdict" id="vaultVerdict" hidden></div></div>
-                <div class="vault-chart-wrap"><div class="vault-lock" id="vaultLock"><i>✦</i><b>Sector <span id="holdoutSector">—</span></b><small>尚未开奖</small></div><svg id="holdoutChart" class="fold-chart" role="img" aria-label="封存观测季相位折叠图"></svg></div>
-              </section>
-
-              <section class="checks-section">
-                <div class="candidate-heading"><div><span class="section-number">03</span><h3>排除“看起来像行星”的假信号</h3></div><p>自动初筛，不等于最终确认</p></div>
-                <div class="checks-grid" id="checksGrid"></div>
-                <div class="pixel-warning" id="pixelWarning"><div class="pixel-map" aria-hidden="true"><span></span><i></i><b></b></div><div><span class="tag amber">尚缺关键证据</span><h3>像素定位还没有跑</h3><p id="pixelText"></p></div></div>
-              </section>
-
-              <details class="expert-drawer" data-expert><summary><span>展开专业证据与运行记录</span><b>+</b></summary><div class="expert-grid" id="expertGrid"></div></details>
+            <header class="target-header"><div><p class="eyebrow" id="targetLabel">LIVE RESULT</p><h2 id="targetName">—</h2><p id="targetSummary"></p></div><div class="target-meta" id="targetMeta"></div></header>
+            <section class="answer-board" id="answerBoard" hidden><div class="answer-head"><div><span class="tag green">排名后查重</span><h3>算法结果和已知目录对照</h3></div><p>目录在候选排名锁定后才查询，不会向算法透露答案。“命中”只表示周期对上已知信号。</p></div><div class="answer-grid" id="answerGrid"></div></section>
+            <section class="answer-board timeline-only"><div class="timeline-head"><div><span class="tag cyan">完整序列</span><h4>不同候选的周期点</h4><p>每一行一个候选；虚线跨过无观测间隔，表示周期时钟继续走。最后一段是封存检验。</p></div><div class="timeline-key"><span><i></i>发现</span><span><i></i>封存</span></div></div><div class="timeline-scroll"><svg id="timelineChart" class="timeline-chart" role="img" aria-label="候选周期完整时间轴"></svg></div></section>
+            <div class="candidate-heading"><div><span class="section-number">02</span><h3>现算候选</h3></div><p>排名分不是行星概率</p></div><div class="candidate-list" id="candidateList"></div>
+            <article class="candidate-detail" id="candidateDetail" hidden>
+              <header class="detail-header"><div class="rank-badge" id="rankBadge">01</div><div><p class="eyebrow">SELECTED CANDIDATE</p><h2><span id="periodValue">—</span> <small>天</small></h2><p id="plainConclusion"></p></div><div class="score-block"><span>候选优先级</span><strong id="scoreValue">—</strong><small>不是概率</small></div></header>
+              <div class="catalog-match" id="catalogMatch"></div>
+              <div class="evidence-grid"><section class="chart-card"><div class="card-title"><div><span class="tag cyan">发现数据</span><h3>重复变暗叠在一起</h3></div></div><svg id="discoveryChart" class="fold-chart" role="img"></svg><div class="chart-axis"><span>早半个周期</span><b>预计凌日中心</b><span>晚半个周期</span></div><p class="chart-caption" id="discoveryCaption"></p></section><section class="plain-card"><div class="card-title"><div><span class="tag gold">大白话</span><h3>为什么排在这里</h3></div></div><div class="reason-list" id="reasonList"></div><div class="branch-strip" id="branchStrip"></div></section></div>
+              <section class="vault-card"><div class="vault-copy"><span class="tag violet">封存检验</span><h3>没参与搜索的最后观测段，有没有按时变暗？</h3><p>周期和历元固定后，才去测量最后一段。如果只有一个观测段，就会明确标注“无法封存检验”。</p><button id="revealButton" type="button"><span>打开封存结果</span><b>✦</b></button><div class="vault-verdict" id="vaultVerdict" hidden></div></div><div class="vault-chart-wrap"><div class="vault-lock" id="vaultLock"><i>✦</i><b id="holdoutLabel">封存段</b><small>点击开奖</small></div><svg id="holdoutChart" class="fold-chart" role="img"></svg></div></section>
+              <section class="checks-section"><div class="candidate-heading"><div><span class="section-number">03</span><h3>假信号排查</h3></div><p>自动初筛，不等于最终确认</p></div><div class="checks-grid" id="checksGrid"></div></section>
+              <details class="expert-drawer" data-expert><summary><span>展开专业证据</span><b>+</b></summary><div class="expert-grid" id="expertGrid"></div></details>
             </article>
           </div>
         </div>
       </section>
-
-      <section class="performance wrap" id="performance">
-        <div class="performance-head"><div><p class="eyebrow">WHAT THE NUMBERS MEAN</p><h2>现在的效果：<em>有进步，但还没毕业。</em></h2></div><p>以下来自已经开封、反复查看过的困难开发集，只能说明改版方向有效，不能冒充面对全星空的准确率。</p></div>
-        <div class="metric-story" id="metricStory"></div>
-        <div class="honesty-band"><b>保留的新盲测仍未打开</b><span>先把误报分类与像素证据补齐，再冻结算法，只开封一次。</span><i id="blindStatus">NOT RUN</i></div>
-      </section>
     </main>
-
-    <footer class="footer wrap"><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>让普通人看懂，让专业人员复核</small></span></div><p>演示使用真实 TESS 开发集与冻结 v0.8 输出。候选 ≠ 确认行星。</p></footer>
+    <footer class="footer wrap"><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>真实数据 · 现场计算 · 封存检验</small></span></div><p>候选 ≠ 确认行星。已知目录只在排名固定后用于对照。</p></footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="demo-data.js"></script><script src="app.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
