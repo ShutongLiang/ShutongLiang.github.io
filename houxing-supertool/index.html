@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#061018" />
     <meta name="description" content="候星超级工具：输入星表编号，实时下载真实观测并搜索行星候选。" />
     <title>候星 · 实时超级工具</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20261020-agent-console" />
   </head>
   <body>
     <div class="starfield" aria-hidden="true"></div>
@@ -37,6 +37,21 @@
         </aside>
 
         <div class="results-panel" id="resultsPanel">
+          <section class="agent-console" id="agentConsole" hidden aria-label="实时研究代理工作日志">
+            <header class="agent-console-head">
+              <div class="agent-identity"><span class="agent-core" aria-hidden="true"><i></i><b></b></span><div><p>HOUXING RESEARCH AGENT</p><h2 id="agentState">正在接管科学任务</h2></div></div>
+              <div class="agent-stats"><div><span>运行时间</span><b id="agentElapsed">00:00</b></div><div><span>真实动作</span><b id="agentActions">0</b></div><div><span>总进度</span><b id="agentPercent">0%</b></div></div>
+              <button class="console-collapse" id="consoleToggle" type="button" aria-expanded="true"><span>收起过程</span><i>−</i></button>
+            </header>
+            <div class="agent-console-body" id="agentConsoleBody">
+              <div class="agent-focus"><span><i></i> 当前正在做</span><p id="agentNarrative">等待任务事件…</p><b class="agent-thinking" aria-label="正在计算"><i></i><i></i><i></i></b></div>
+              <div class="terminal-shell">
+                <div class="terminal-bar"><div class="terminal-lights" aria-hidden="true"><i></i><i></i><i></i></div><span>LIVE SCIENCE EXECUTION LOG</span><button id="copyAgentLog" type="button">复制日志</button></div>
+                <div class="terminal-stream" id="agentLog" role="log" aria-live="polite" aria-relevant="additions"><div class="terminal-wait"><span>$</span> 等待后台真实事件…</div></div>
+              </div>
+              <p class="console-honesty"><i></i> 这里显示的是实际执行阶段、参数和中间数量；不是预先写好的动画，也不会展示模型的隐藏思考。</p>
+            </div>
+          </section>
           <div class="empty-state" id="emptyState"><div class="radar"><i></i><span></span></div><h2>等待实时扫描</h2><p>输入目标后，这里会显示真实进度和现算结果。</p></div>
           <div class="results-content" id="resultsContent" hidden>
             <header class="target-header"><div><p class="eyebrow" id="targetLabel">LIVE RESULT</p><h2 id="targetName">—</h2><p id="targetSummary"></p></div><div class="target-meta" id="targetMeta"></div></header>
@@ -57,6 +72,6 @@
     </main>
     <footer class="footer wrap"><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>真实数据 · 现场计算 · 封存检验</small></span></div><p>候选 ≠ 确认行星。已知目录只在排名固定后用于对照。</p></footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js"></script>
+    <script src="app.js?v=20261020-agent-console"></script>
   </body>
 </html>
