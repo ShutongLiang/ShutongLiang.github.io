@@ -4,42 +4,67 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#061018" />
-    <meta name="description" content="候星超级工具：输入星表编号，实时下载真实观测并搜索行星候选。" />
-    <title>候星 · 实时超级工具</title>
-    <link rel="stylesheet" href="styles.css?v=20261020-agent-console" />
+    <meta name="description" content="候星 VLora：从正式天文编目到真实 TESS 光变数据和可复核行星候选的完整计算工具。" />
+    <title>候星 · VLora 行星搜索工具</title>
+    <link rel="stylesheet" href="uPlot.min.css?v=1.6.32" />
+    <link rel="stylesheet" href="styles.css?v=20261022-vlora3" />
   </head>
   <body>
     <div class="starfield" aria-hidden="true"></div>
     <header class="topbar">
-      <a class="brand" href="#top" aria-label="候星首页"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>HOUXING LIVE</small></span></a>
+      <a class="brand" href="#top" aria-label="候星 VLora 首页"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星 <em>/ VLora</em></strong><small>EXOPLANET SEARCH WORKBENCH</small></span></a>
       <div class="topbar-center" id="engineStatus"><span class="live-dot"></span> 正在连接本地计算引擎…</div>
-      <button class="mode-switch" id="modeSwitch" type="button" aria-pressed="false"><span>小白模式</span><i></i><span>专业模式</span></button>
+      <div class="topbar-actions"><a href="#sky">三维星图</a><a href="#scan">实时计算</a><button class="mode-switch" id="modeSwitch" type="button" aria-pressed="false"><span>小白模式</span><i></i><span>专业模式</span></button></div>
     </header>
 
     <main id="top">
-      <section class="hero wrap">
-        <div class="hero-copy"><p class="eyebrow">LIVE ARCHIVE SEARCH / REAL SCIENCE DATA</p><h1>输入一颗星，<br /><em>现场算给你看。</em></h1><p class="hero-lead">这不是预先准备好的演示。每次点击都会用 Lightkurve 查找 MAST 数据，下载到 Passport，再现场运行多支路、多行星和封存检验。</p></div>
-        <div class="orbit-visual" aria-hidden="true"><div class="sun"></div><div class="orbit orbit-a"><span></span></div><div class="orbit orbit-b"><span></span></div><div class="transit-line"></div><div class="visual-label"><b>真实计算</b><span>从档案到候选</span></div></div>
+      <section class="observatory-hero" id="sky" aria-label="可拖动的三维地球与天文目标星图">
+        <canvas id="skyCanvas"></canvas>
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="scene-copy">
+          <p class="eyebrow">HOUXING / VLORA · REAL TESS DATA</p>
+          <h1>输入一颗星，<br /><em>现场算给你看。</em></h1>
+          <p>拖动星空选择真实目标，或输入官方 TOI / TIC 标识。VLora 会从 MAST 获取真实观测，运行多折完整搜索，并保留所有锁定候选供复核。</p>
+          <div class="scene-hints"><span>拖动旋转</span><span>滚轮缩放</span><span>点击目标</span></div>
+        </div>
+        <aside class="scene-inspector" aria-live="polite">
+          <span class="scene-kicker">SELECTED CATALOG TARGET</span>
+          <h2 id="sceneTargetName">TOI-125</h2>
+          <p id="sceneTargetCatalog">TIC 52368076</p>
+          <dl><div><dt>任务</dt><dd>TESS</dd></div><div><dt>标识类型</dt><dd id="sceneTargetType">TOI + TIC</dd></div></dl>
+          <button type="button" id="sceneRunButton">送入 VLora 完整计算 <b>→</b></button>
+          <small>地球周围位置只用于交互导航，不表示真实天球坐标或距离。</small>
+        </aside>
+        <div class="scene-targets" id="sceneTargets" aria-label="正式天文目标">
+          <button type="button" data-target="TOI-700" data-tic="TIC 150428135"><i></i><b>TOI-700</b><span>TIC 150428135</span></button>
+          <button type="button" data-target="TOI-4593" data-tic="TIC 399954349"><i></i><b>TOI-4593</b><span>TIC 399954349</span></button>
+          <button type="button" data-target="TOI-4342" data-tic="TIC 354944123"><i></i><b>TOI-4342</b><span>TIC 354944123</span></button>
+          <button type="button" data-target="TOI-5624" data-tic="TIC 53498154"><i></i><b>TOI-5624</b><span>TIC 53498154</span></button>
+          <button type="button" class="active" data-target="TOI-125" data-tic="TIC 52368076"><i></i><b>TOI-125</b><span>TIC 52368076 · 验收通过</span></button>
+          <button type="button" data-target="TOI-216" data-tic="TIC 55652896"><i></i><b>TOI-216</b><span>TIC 55652896</span></button>
+          <button type="button" data-target="TOI-2180" data-tic="TIC 298663873"><i></i><b>TOI-2180</b><span>TIC 298663873</span></button>
+        </div>
       </section>
 
-      <section class="search-deck wrap" aria-labelledby="searchTitle">
-        <div class="search-copy"><span class="section-number">01</span><div><p class="eyebrow" id="searchTitle">START A LIVE SCAN</p><h2>输入 TIC、KIC、EPIC 或星名</h2><p>普通模式自动选 5 个有代表性的观测段；深度模式选 8 个并扩展长周期搜索。</p></div></div>
-        <form class="search-form live-form" id="searchForm"><select id="missionSelect" aria-label="观测任务"><option value="TESS">TESS</option><option value="Kepler">Kepler</option><option value="K2">K2</option></select><input id="ticInput" autocomplete="off" value="TIC 354944123" placeholder="例如 TIC 354944123" aria-describedby="searchHint" /><select id="runMode" aria-label="搜索深度"><option value="standard">普通</option><option value="deep">深度</option></select><button id="scanButton" type="submit"><span>实时扫描</span><b aria-hidden="true">→</b></button></form>
-        <div class="demo-targets" aria-label="输入示例"><button class="target-chip" type="button" data-target="TIC 354944123" data-mission="TESS">TIC 354944123</button><button class="target-chip" type="button" data-target="TIC 53498154" data-mission="TESS">TIC 53498154</button><button class="target-chip" type="button" data-target="Kepler-10" data-mission="Kepler">Kepler-10</button></div>
-        <p class="form-hint" id="searchHint">实时任务可能需要几分钟到几十分钟。数据和结果缓存在 Passport，再次运行不会重复下载。</p>
+      <section class="search-deck wrap" id="scan" aria-labelledby="searchTitle">
+        <div class="search-copy"><span class="section-number">01</span><div><p class="eyebrow" id="searchTitle">START A LIVE VLORA SCAN</p><h2>输入正式 TOI 名称或 TIC 编号</h2><p>默认使用 VLora Core 完成常规搜索；只在观测段较少、需要极精细 FFI 复核时选 Pro Max。</p></div></div>
+        <form class="search-form live-form" id="searchForm"><select id="missionSelect" aria-label="观测任务"><option value="TESS">TESS</option></select><input id="ticInput" autocomplete="off" value="TOI-125" placeholder="例如 TOI-125 或 TIC 52368076" aria-describedby="searchHint engineHint" /><select id="runMode" aria-label="VLora 引擎"><option value="standard" selected>Core · 默认</option><option value="deep">Pro Max · 精细</option></select><button id="scanButton" type="submit"><span>运行 VLora</span><b aria-hidden="true">→</b></button></form>
+        <div class="engine-guidance" id="engineHint" data-engine="core"><i aria-hidden="true"></i><div><b>VLora Core · 默认基础版</b><span>使用全部可用观测段运行完整多折搜索，适合标准演示和日常目标。</span></div></div>
+        <div class="demo-targets" aria-label="官方编目示例"><button class="target-chip recommended" type="button" data-target="TOI-125" data-mission="TESS">TOI-125 <small>推荐演示 · 已验收</small></button><button class="target-chip" type="button" data-target="TOI-5624" data-mission="TESS">TOI-5624</button><button class="target-chip" type="button" data-target="TOI-700" data-mission="TESS">TOI-700</button><button class="target-chip" type="button" data-target="TOI-4593" data-mission="TESS">TOI-4593</button><button class="target-chip" type="button" data-target="TOI-4342" data-mission="TESS">TOI-4342</button></div>
+        <p class="form-hint" id="searchHint">标准演示目标 TOI-125 只有 7 个官方 SPOC sector；我们的旧回归记录已找回 4.65172、9.15536 和 19.98137 天三个已确认周期。数据和结果缓存在 Passport。</p>
       </section>
 
       <section class="workbench wrap" id="workbench" aria-live="polite">
         <aside class="pipeline-panel">
           <div class="panel-kicker">实时任务</div><h2>后台正在做什么</h2>
-          <ol class="pipeline" id="pipeline"><li data-stage="discovering"><span>01</span><div><b>找数据</b><small>Lightkurve 查 MAST 产品</small></div><i></i></li><li data-stage="downloading"><span>02</span><div><b>下载与校验</b><small>断点续传到 Passport</small></div><i></i></li><li data-stage="searching"><span>03</span><div><b>现场搜索</b><small>BLS + 事件优先 + 残差</small></div><i></i></li><li data-stage="ranking"><span>04</span><div><b>合并排假</b><small>谐波、物理和多支路证据</small></div><i></i></li><li data-stage="catalog"><span>05</span><div><b>封存与查重</b><small>排名锁定后才查已知目录</small></div><i></i></li></ol>
+          <ol class="pipeline" id="pipeline"><li data-stage="discovering"><span>01</span><div><b>找数据</b><small>Lightkurve 查 MAST 产品</small></div><i></i></li><li data-stage="downloading"><span>02</span><div><b>下载与分折</b><small>全部观测段分为 A/B/C</small></div><i></i></li><li data-stage="searching"><span>03</span><div><b>三折完整搜索</b><small>BLS + 事件优先，不限候选数</small></div><i></i></li><li data-stage="ranking"><span>04</span><div><b>统一星历与风险标注</b><small>跨折复测、双星和像素证据</small></div><i></i></li><li data-stage="catalog"><span>05</span><div><b>最后查重</b><small>所有无标签证据锁定后才查目录</small></div><i></i></li></ol>
           <div class="pipeline-note"><span class="status-dot"></span><p id="jobMessage"><b>等待任务</b><br />连接成功后可以输入任意可查目标。</p></div><div class="progress-track"><i id="progressBar"></i></div><small class="progress-number" id="progressNumber">0%</small>
         </aside>
 
         <div class="results-panel" id="resultsPanel">
           <section class="agent-console" id="agentConsole" hidden aria-label="实时研究代理工作日志">
             <header class="agent-console-head">
-              <div class="agent-identity"><span class="agent-core" aria-hidden="true"><i></i><b></b></span><div><p>HOUXING RESEARCH AGENT</p><h2 id="agentState">正在接管科学任务</h2></div></div>
+              <div class="agent-identity"><span class="agent-core" aria-hidden="true"><i></i><b></b></span><div><p>VLORA SCIENCE ENGINE</p><h2 id="agentState">正在接管科学任务</h2></div></div>
               <div class="agent-stats"><div><span>运行时间</span><b id="agentElapsed">00:00</b></div><div><span>真实动作</span><b id="agentActions">0</b></div><div><span>总进度</span><b id="agentPercent">0%</b></div></div>
               <button class="console-collapse" id="consoleToggle" type="button" aria-expanded="true"><span>收起过程</span><i>−</i></button>
             </header>
@@ -55,23 +80,35 @@
           <div class="empty-state" id="emptyState"><div class="radar"><i></i><span></span></div><h2>等待实时扫描</h2><p>输入目标后，这里会显示真实进度和现算结果。</p></div>
           <div class="results-content" id="resultsContent" hidden>
             <header class="target-header"><div><p class="eyebrow" id="targetLabel">LIVE RESULT</p><h2 id="targetName">—</h2><p id="targetSummary"></p></div><div class="target-meta" id="targetMeta"></div></header>
+            <section class="report-board" aria-labelledby="reportTitle">
+              <div class="report-heading"><div><span class="tag cyan">REPRODUCIBLE REPORT</span><h3 id="reportTitle">完整科学报告</h3><p>页面、CSV 和 JSON 共用同一份未删减候选账本。PDF 包含当前候选的图与全部候选索引。</p></div><div class="report-actions"><button type="button" id="printReport">打印 / 保存 PDF</button><button type="button" id="downloadCsv">下载全部候选 CSV</button><button type="button" id="downloadJson">下载完整 JSON</button><button type="button" id="downloadAudit">下载审计记录</button></div></div>
+              <dl class="report-meta" id="reportMeta"></dl>
+              <div class="report-notice"><b>科学边界</b><span>本报告是自动候选发现与初步排假结果，不是行星确认声明。任何新候选都需要完成目标像素定位、邻星归属和独立跟进。</span></div>
+            </section>
             <section class="answer-board" id="answerBoard" hidden><div class="answer-head"><div><span class="tag green">排名后查重</span><h3>算法结果和已知目录对照</h3></div><p>目录在候选排名锁定后才查询，不会向算法透露答案。“命中”只表示周期对上已知信号。</p></div><div class="answer-grid" id="answerGrid"></div></section>
-            <section class="answer-board timeline-only"><div class="timeline-head"><div><span class="tag cyan">完整序列</span><h4>不同候选的周期点</h4><p>每一行一个候选；虚线跨过无观测间隔，表示周期时钟继续走。最后一段是封存检验。</p></div><div class="timeline-key"><span><i></i>发现</span><span><i></i>封存</span></div></div><div class="timeline-scroll"><svg id="timelineChart" class="timeline-chart" role="img" aria-label="候选周期完整时间轴"></svg></div></section>
+            <section class="answer-board timeline-only"><div class="timeline-head"><div><span class="tag cyan">完整序列</span><h4>所有候选的周期点</h4><p>每一行一个候选；虚线跨过无观测间隔，不会因双星或像素标记隐藏任何候选。</p></div></div><div class="timeline-scroll"><svg id="timelineChart" class="timeline-chart" role="img" aria-label="候选周期完整时间轴"></svg></div></section>
             <div class="candidate-heading"><div><span class="section-number">02</span><h3>现算候选</h3></div><p>排名分不是行星概率</p></div><div class="candidate-list" id="candidateList"></div>
             <article class="candidate-detail" id="candidateDetail" hidden>
               <header class="detail-header"><div class="rank-badge" id="rankBadge">01</div><div><p class="eyebrow">SELECTED CANDIDATE</p><h2><span id="periodValue">—</span> <small>天</small></h2><p id="plainConclusion"></p></div><div class="score-block"><span>候选优先级</span><strong id="scoreValue">—</strong><small>不是概率</small></div></header>
               <div class="catalog-match" id="catalogMatch"></div>
-              <div class="evidence-grid"><section class="chart-card"><div class="card-title"><div><span class="tag cyan">发现数据</span><h3>重复变暗叠在一起</h3></div></div><svg id="discoveryChart" class="fold-chart" role="img"></svg><div class="chart-axis"><span>早半个周期</span><b>预计凌日中心</b><span>晚半个周期</span></div><p class="chart-caption" id="discoveryCaption"></p></section><section class="plain-card"><div class="card-title"><div><span class="tag gold">大白话</span><h3>为什么排在这里</h3></div></div><div class="reason-list" id="reasonList"></div><div class="branch-strip" id="branchStrip"></div></section></div>
-              <section class="vault-card"><div class="vault-copy"><span class="tag violet">封存检验</span><h3>没参与搜索的最后观测段，有没有按时变暗？</h3><p>周期和历元固定后，才去测量最后一段。如果只有一个观测段，就会明确标注“无法封存检验”。</p><button id="revealButton" type="button"><span>打开封存结果</span><b>✦</b></button><div class="vault-verdict" id="vaultVerdict" hidden></div></div><div class="vault-chart-wrap"><div class="vault-lock" id="vaultLock"><i>✦</i><b id="holdoutLabel">封存段</b><small>点击开奖</small></div><svg id="holdoutChart" class="fold-chart" role="img"></svg></div></section>
+              <div class="evidence-grid"><section class="chart-card"><div class="card-title"><div><span class="tag cyan">发现数据</span><h3>重复变暗叠在一起</h3></div></div><div id="discoveryChart" class="fold-chart" role="img" aria-label="uPlot 相位折叠光变图"></div><div class="chart-axis"><span>早半个周期</span><b>预计凌日中心</b><span>晚半个周期</span></div><p class="chart-caption" id="discoveryCaption"></p></section><section class="plain-card"><div class="card-title"><div><span class="tag gold">大白话</span><h3>为什么排在这里</h3></div></div><div class="reason-list" id="reasonList"></div><div class="branch-strip" id="branchStrip"></div></section></div>
+              <section class="vault-card"><div class="vault-copy"><span class="tag violet">统一星历复测</span><h3>同一套周期和历元，在三个时间折中是否都复现？</h3><p>三折先分别搜索，交集形成后才锁定一套全局星历，各折不允许单独平移。</p><button id="revealButton" type="button"><span>打开三折固定复测</span><b>✦</b></button><div class="vault-verdict" id="vaultVerdict" hidden></div></div><div class="vault-chart-wrap"><div class="vault-lock" id="vaultLock"><i>✦</i><b id="holdoutLabel">三折固定复测</b><small>点击查看</small></div><div id="holdoutChart" class="fold-chart" role="img" aria-label="uPlot 固定星历复测图"></div></div></section>
               <section class="checks-section"><div class="candidate-heading"><div><span class="section-number">03</span><h3>假信号排查</h3></div><p>自动初筛，不等于最终确认</p></div><div class="checks-grid" id="checksGrid"></div></section>
               <details class="expert-drawer" data-expert><summary><span>展开专业证据</span><b>+</b></summary><div class="expert-grid" id="expertGrid"></div></details>
             </article>
+            <section class="ledger-section" aria-labelledby="ledgerTitle">
+              <div class="candidate-heading"><div><span class="section-number">04</span><h3 id="ledgerTitle">全部候选账本</h3></div><p>只标注，不因双星、像素或目录结果删除任何已锁定候选</p></div>
+              <div class="ledger-scroll"><table><thead><tr><th>#</th><th>周期 / d</th><th>历元 / BTJD</th><th>时长 / h</th><th>搜索 S/N</th><th>红噪声 MES-like</th><th>深度 / ppm</th><th>多折复现</th><th>事件支持</th><th>天体物理 / 像素</th><th>目录对照</th></tr></thead><tbody id="ledgerRows"></tbody></table></div>
+            </section>
           </div>
         </div>
       </section>
     </main>
-    <footer class="footer wrap"><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星</strong><small>真实数据 · 现场计算 · 封存检验</small></span></div><p>候选 ≠ 确认行星。已知目录只在排名固定后用于对照。</p></footer>
+    <footer class="footer wrap"><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i></span><span><strong>候星 / VLora</strong><small>真实数据 · 完整计算 · 可复核候选账本</small></span></div><p>候选 ≠ 确认行星。已知目录只在排名固定后用于对照。三维渲染使用开源 three.js。</p></footer>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20261020-agent-console"></script>
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+    <script type="module" src="orbit-scene.js?v=20261022-vlora3"></script>
+    <script src="uPlot.iife.min.js?v=1.6.32"></script>
+    <script src="app.js?v=20261022-vlora3"></script>
   </body>
 </html>
